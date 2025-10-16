@@ -82,6 +82,17 @@ int main(int argc, char *argv[])
             last_step_epoch_nanos = current_epoch_nanos;
         }
 
+        if (GLFW_PRESS == glfwGetKey(ra.window, GLFW_KEY_SPACE)
+            || GLFW_PRESS == glfwGetKey(ra.window, GLFW_KEY_ENTER)
+            || GLFW_PRESS == glfwGetMouseButton(ra.window, GLFW_MOUSE_BUTTON_LEFT))
+        {
+            if (ra.is_preview)
+            {
+                printf("Input detected! Triggering close...\n");
+            }
+            glfwSetWindowShouldClose(ra.window, GLFW_TRUE);
+        }
+
         ra_render(&ra, uptime_nanos);
 
         glfwSwapBuffers(ra.window);
@@ -165,8 +176,6 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
         width  = 800;
         height = 600;
         window = glfwCreateWindow(width, height, "RandomAttractors.scr", NULL, NULL);
-
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
     else
     {
@@ -177,6 +186,7 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
         height = mode->height;
 
         window = glfwCreateWindow(width, height, "RandomAttractors.scr", monitor, NULL);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 
     if (window == NULL)
