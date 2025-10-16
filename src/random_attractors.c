@@ -250,4 +250,8 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     float  rotation_angle = sin(uptime_secs * ROTATION_RADS_PER_SEC);
 
     // TODO Call shaders to re-render the screen
+    // Shaders will need to:
+    // - Translate and rotate the camera to achieve an isometric viewpoint
+    // - Rotate the geometry to the current rotation angle
+    // - Find hotspots of color (bloom?) and color the regions by intensity
 }
