@@ -9,6 +9,38 @@ file(GLOB_RECURSE HEADER_FILES
 	${CMAKE_SOURCE_DIR}/src/*.h
 )
 add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
+
+#
+# Embed GLSL as strings
+#
+
+function(embed_shader_glsl SHADER_FILE OUT_HEADER VAR_NAME)
+    file(READ ${SHADER_FILE} SHADER_CONTENT)
+    string(REPLACE "\\" "\\\\" SHADER_CONTENT "${SHADER_CONTENT}")
+    string(REPLACE "\"" "\\\"" SHADER_CONTENT "${SHADER_CONTENT}")
+    string(REPLACE "\n" "\\n\"\n\"" SHADER_CONTENT "${SHADER_CONTENT}")
+    file(WRITE ${OUT_HEADER} "const char* ${VAR_NAME} = \"${SHADER_CONTENT}\";\n")
+endfunction()
+
+set(SHADERS_DIR ${CMAKE_SOURCE_DIR}/src/glsl)
+set(OUT_SHADERS_DIR ${CMAKE_BINARY_DIR}/shaders)
+
+file(MAKE_DIRECTORY ${OUT_SHADERS_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${OUT_SHADERS_DIR})
+
+embed_shader_glsl(${SHADERS_DIR}/vertex.glsl ${OUT_SHADERS_DIR}/vertex_shader.h vertex_glsl)
+embed_shader_glsl(${SHADERS_DIR}/fragment.glsl ${OUT_SHADERS_DIR}/fragment_shader.h fragment_glsl)
+
+add_custom_target(embed_shaders DEPENDS
+    ${CMAKE_BINARY_DIR}/shaders/vertex_shader.h
+    ${CMAKE_BINARY_DIR}/shaders/fragment_shader.h
+)
+add_dependencies(RandomAttractors embed_shaders)
+
+#
+# Remaining CMake things...
+#
+
 set_target_properties(
   ${PROJECT_NAME}
     PROPERTIES 

@@ -10,9 +10,26 @@
 #include <string.h>
 #include <time.h>
 
+#include "fragment_shader.h"
 #include "random_attractors.h"
+#include "vertex_shader.h"
 
 #define ROTATION_RADS_PER_SEC (0.1 * M_PI)
+
+float vertices[] = {
+    //
+    -0.5f,
+    -0.5f,
+    +0.0f,
+    //
+    +0.5f,
+    -0.5f,
+    +0.0f,
+    //
+    +0.0f,
+    +0.5f,
+    +0.0f,
+};
 
 int main(int argc, char *argv[])
 {
@@ -48,8 +65,30 @@ int main(int argc, char *argv[])
         return ra.error;
     }
 
-    // TODO Need to compile all the shaders!
-    ra_compile_shader();
+    // Buffer things here for the moment...
+
+    glGenBuffers(1, &ra.vbo_handle);
+    glGenVertexArrays(1, &ra.vao_handle);
+
+    int vertex_handle   = 0;
+    int fragment_handle = 0;
+    ra_compile_shader(vertex_glsl, SHADERTYPE_VERTEX, &vertex_handle);
+    ra_compile_shader(fragment_glsl, SHADERTYPE_FRAGMENT, &fragment_handle);
+    ra_link_shader_program(vertex_handle, fragment_handle, &ra.program_handle);
+
+    glDeleteShader(vertex_handle);
+    glDeleteShader(fragment_handle);
+
+    // Load vertex data
+    glBindBuffer(GL_ARRAY_BUFFER, ra.vbo_handle);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindVertexArray(ra.vao_handle);
+    glBindBuffer(GL_ARRAY_BUFFER, ra.vbo_handle);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
 
     //
     // Simulation
@@ -105,10 +144,6 @@ int main(int argc, char *argv[])
 
     glfwTerminate();
     return RA_OK;
-}
-
-long long ra_get_uptime_millis()
-{
 }
 
 void ra_parse_args(struct RandomAttractors *ra, int argc, char *argv[])
@@ -235,8 +270,66 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     // TODO set up vertex buffers etc etc etc
 }
 
-void ra_compile_shader()
+enum RA_Error ra_compile_shader(const GLchar *source, enum RA_ShaderType type, GLuint *handle)
 {
+    int gl_shader_type = 0;
+
+    switch (type)
+    {
+        case SHADERTYPE_VERTEX:
+            gl_shader_type = GL_VERTEX_SHADER;
+            break;
+        case SHADERTYPE_FRAGMENT:
+            gl_shader_type = GL_FRAGMENT_SHADER;
+            break;
+        case SHADERTYPE_COMPUTE:
+            gl_shader_type = GL_COMPUTE_SHADER;
+            break;
+        default:
+            printf("Failed to compile illegal ShaderType: %d\n", type);
+            return RA_ERROR_INIT_SHADERTYPE;
+    }
+
+    printf("Compiling shader: \n\n%s\n\n", source);
+
+    *handle = glCreateShader(gl_shader_type);
+    glShaderSource(*handle, 1, &source, NULL);
+    glCompileShader(*handle);
+
+    int    success      = 0;
+    GLchar infoLog[512] = { 0 };
+    glGetShaderiv(*handle, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(*handle, 512, NULL, infoLog);
+        printf("Shader compilation failed. Type=%d. Error: %s\n", gl_shader_type, infoLog);
+        return RA_ERROR_INIT_SHADERCOMP;
+    }
+
+    printf("Successfully compiled shader (%d)! Type=%d\n", *handle, gl_shader_type);
+    return RA_OK;
+}
+
+enum RA_Error ra_link_shader_program(
+    GLuint vertex_handle, GLuint frag_handle, GLuint *program_handle)
+{
+    *program_handle = glCreateProgram();
+    glAttachShader(*program_handle, vertex_handle);
+    glAttachShader(*program_handle, frag_handle);
+    glLinkProgram(*program_handle);
+
+    int    success      = 0;
+    GLchar infoLog[512] = { 0 };
+    glGetProgramiv(*program_handle, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        glGetProgramInfoLog(*program_handle, 512, NULL, infoLog);
+        printf("Shader linking failed. Error: %s\n", infoLog);
+        return RA_ERROR_INIT_SHADERLINK;
+    }
+
+    printf("Successfully linked shader program (%d)\n", *program_handle);
+    return RA_OK;
 }
 
 void ra_compute_next_step(struct RandomAttractors *ra)
@@ -254,4 +347,8 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     // - Translate and rotate the camera to achieve an isometric viewpoint
     // - Rotate the geometry to the current rotation angle
     // - Find hotspots of color (bloom?) and color the regions by intensity
+
+    glUseProgram(ra->program_handle);
+    glBindVertexArray(ra->vao_handle);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
