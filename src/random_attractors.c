@@ -14,21 +14,26 @@
 #include "random_attractors.h"
 #include "vertex_shader.h"
 
-#define ROTATION_RADS_PER_SEC (1 * M_PI)
+#define ROTATION_RADS_PER_SEC (0.1 * M_PI)
 
 float vertices[] = {
-    //
-    -0.5f,
-    -0.5f,
-    +0.0f,
-    //
-    +0.5f,
-    -0.5f,
-    +0.0f,
-    //
-    +0.0f,
-    +0.5f,
-    +0.0f,
+    // Edge 0: Apex → Base vertex 0
+    0.0f, 0.5f, 0.0f, -0.5f, -0.25f, 0.2887f,
+
+    // Edge 1: Apex → Base vertex 1
+    0.0f, 0.5f, 0.0f, 0.5f, -0.25f, 0.2887f,
+
+    // Edge 2: Apex → Base vertex 2
+    0.0f, 0.5f, 0.0f, 0.0f, -0.25f, -0.5774f,
+
+    // Edge 3: Base edge 0–1
+    -0.5f, -0.25f, 0.2887f, 0.5f, -0.25f, 0.2887f,
+
+    // Edge 4: Base edge 1–2
+    0.5f, -0.25f, 0.2887f, 0.0f, -0.25f, -0.5774f,
+
+    // Edge 5: Base edge 2–0
+    0.0f, -0.25f, -0.5774f, -0.5f, -0.25f, 0.2887f
 };
 
 int main(int argc, char *argv[])
@@ -350,7 +355,9 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     // - Find hotspots of color (bloom?) and color the regions by intensity
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(ra->program_handle);
 
@@ -360,5 +367,6 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     printf("y_rads = %f @ %d\n", rotation_angle, y_rads_location);
 
     glBindVertexArray(ra->vao_handle);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glLineWidth(5.0f);
+    glDrawArrays(GL_LINES, 0, sizeof(vertices) / (sizeof(float) * 3));
 }

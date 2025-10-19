@@ -35,5 +35,5 @@ void main()
   // Transformations applied in reverse order:
   // - Rotate the mesh
   // - Translate away from the camera
-  gl_Position = translate(vec3(0.0, 0.0, 0.5)) * y_rotation(y_rads) * vec4(aPos.x, aPos.y, aPos.z, 1.0);
+  gl_Position = translate(vec3(0.0, 0.0, 0.2)) * y_rotation(y_rads) * vec4(aPos.x, aPos.y, aPos.z, 1.0);
 }
