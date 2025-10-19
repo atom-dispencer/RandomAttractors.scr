@@ -14,7 +14,7 @@
 #include "random_attractors.h"
 #include "vertex_shader.h"
 
-#define ROTATION_RADS_PER_SEC (0.1 * M_PI)
+#define ROTATION_RADS_PER_SEC (1 * M_PI)
 
 float vertices[] = {
     //
@@ -113,6 +113,7 @@ int main(int argc, char *argv[])
 
     while (!glfwWindowShouldClose(ra.window))
     {
+        timespec_get(&ts, TIME_UTC);
         current_epoch_nanos = (long long)(ts.tv_sec * 1e9 + ts.tv_nsec);
         uptime_nanos        = current_epoch_nanos - start_epoch_nanos;
         if (current_epoch_nanos - last_step_epoch_nanos > 1e9)
@@ -254,7 +255,7 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Control VSync (0=off, 1=framerate, 2=half-framerate)
-    glfwSwapInterval(2); // 0 for vsync off
+    glfwSwapInterval(1); // 0 for vsync off
 
     ra->window = window;
     ra->error  = RA_OK;
@@ -339,8 +340,8 @@ void ra_compute_next_step(struct RandomAttractors *ra)
 
 void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
 {
-    double uptime_secs    = uptime_nanos / 1e9;
-    float  rotation_angle = sin(uptime_secs * ROTATION_RADS_PER_SEC);
+    double uptime_secs    = uptime_nanos / 1.0e9d;
+    float  rotation_angle = uptime_secs * ROTATION_RADS_PER_SEC;
 
     // TODO Call shaders to re-render the screen
     // Shaders will need to:
@@ -348,7 +349,16 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     // - Rotate the geometry to the current rotation angle
     // - Find hotspots of color (bloom?) and color the regions by intensity
 
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     glUseProgram(ra->program_handle);
+
+    GLuint y_rads_location = glGetUniformLocation(ra->program_handle, "y_rads");
+    glUniform1f(y_rads_location, rotation_angle);
+
+    printf("y_rads = %f @ %d\n", rotation_angle, y_rads_location);
+
     glBindVertexArray(ra->vao_handle);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
