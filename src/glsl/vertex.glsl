@@ -2,6 +2,8 @@
 layout(location = 0) in vec3 aPos;
 uniform float y_rads;
 
+out vec3 vColor;
+
 mat4 translate(vec3 v)
 {
     return mat4(
@@ -28,6 +30,8 @@ mat4 y_rotation(float rads)
 
 void main()
 {
+  vColor = normalize(aPos * 0.5 + 0.5);
+
   // Transformations applied in reverse order:
   // - Rotate the mesh
   // - Translate away from the camera
