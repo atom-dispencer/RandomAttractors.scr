@@ -2,7 +2,6 @@
 // clang-format off
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-// clang-format on
 
 #include <math.h>
 #include <stdio.h>
@@ -10,9 +9,14 @@
 #include <string.h>
 #include <time.h>
 
-#include "fragment_shader.h"
 #include "random_attractors.h"
-#include "vertex_shader.h"
+
+#include "mesh_fragment_shader.h"
+#include "mesh_vertex_shader.h"
+#include "spot_fragment_shader.h"
+#include "spot_vertex_shader.h"
+
+// clang-format on
 
 #define ROTATION_RADS_PER_SEC (0.1 * M_PI)
 
@@ -34,6 +38,33 @@ float vertices[] = {
 
     // Edge 5: Base edge 2–0
     0.0f, -0.25f, -0.5774f, -0.5f, -0.25f, 0.2887f
+};
+
+float spotlight_vertices = {
+    // 0
+    -1.0f,
+    0.0f,
+    -1.0f,
+    // 0 -> 1
+    -1.0f,
+    0.0f,
+    1.0f,
+    // 1 -> 2
+    1.0f,
+    0.0f,
+    1.0f,
+    // 0
+    -1.0f,
+    0.0f,
+    -1.0f,
+    // 0 -> 2
+    1.0f,
+    0.0f,
+    1.0f,
+    // 2 -> 3
+    1.0f,
+    0.0f,
+    -1.0f,
 };
 
 int main(int argc, char *argv[])
@@ -75,14 +106,18 @@ int main(int argc, char *argv[])
     glGenBuffers(1, &ra.vbo_handle);
     glGenVertexArrays(1, &ra.vao_handle);
 
-    int vertex_handle   = 0;
-    int fragment_handle = 0;
-    ra_compile_shader(vertex_glsl, SHADERTYPE_VERTEX, &vertex_handle);
-    ra_compile_shader(fragment_glsl, SHADERTYPE_FRAGMENT, &fragment_handle);
-    ra_link_shader_program(vertex_handle, fragment_handle, &ra.program_handle);
+    int mesh_vertex_handle   = 0;
+    int mesh_fragment_handle = 0;
+    int spot_fragment_handle = 0;
+    ra_compile_shader(mesh_vertex_glsl, SHADERTYPE_VERTEX, &mesh_vertex_handle);
+    ra_compile_shader(mesh_fragment_glsl, SHADERTYPE_FRAGMENT, &mesh_fragment_handle);
+    ra_compile_shader(spot_fragment_glsl, SHADERTYPE_FRAGMENT, &spot_fragment_handle);
+    ra_link_shader_program(mesh_vertex_handle, mesh_fragment_handle, &ra.program_handle);
+    ra_link_shader_program(mesh_vertex_handle, spot_fragment_handle, &ra.spot_program_handle);
 
-    glDeleteShader(vertex_handle);
-    glDeleteShader(fragment_handle);
+    glDeleteShader(mesh_vertex_handle);
+    glDeleteShader(mesh_fragment_handle);
+    glDeleteShader(spot_fragment_handle);
 
     // Load vertex data
     glBindBuffer(GL_ARRAY_BUFFER, ra.vbo_handle);
