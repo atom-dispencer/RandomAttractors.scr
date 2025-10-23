@@ -100,9 +100,7 @@ mat4 scale(vec3 s)
 
 vec4 calculate_colour()
 {
-  vec4 c = normalize(aPos * 0.5 + 0.5);
-  c.w = 1.0;
-  return c;
+  return vec4(normalize(aPos.xyz * 0.5 + 0.5), 1.0);
 }
 
 //
