@@ -1,6 +1,7 @@
 #version 460 core
 
-layout(location = 0) in vec3 aPos;
+layout(location = 0) in vec4 aPos;
+layout(location = 1) in float frac;
 uniform float time_secs = 0;
 
 out vec4 vertex_colour;
@@ -99,7 +100,9 @@ mat4 scale(vec3 s)
 
 vec4 calculate_colour()
 {
-  return vec4(normalize(aPos * 0.5 + 0.5), 1.0);
+  vec4 c = normalize(aPos * 0.5 + 0.5);
+  c.w = 1.0;
+  return c;
 }
 
 //
@@ -129,5 +132,5 @@ void main()
     * x_rotation(PITCH_RADS)                          // 3rd - Pitch the mesh like we're looking from above
     * y_rotation(y_rads)                              // 2nd - Yaw the mesh so it spins nicely
     // 
-    * vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    * aPos;
 }

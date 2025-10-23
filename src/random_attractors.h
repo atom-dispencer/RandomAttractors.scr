@@ -27,12 +27,21 @@ struct RandomAttractors
     bool          is_preview;
     GLFWwindow   *window;
 
-    GLuint mesh_vbo_handle;
-    GLuint mesh_vao_handle;
+    GLuint lines_vbo_handle;
+    GLuint lines_vao_handle;
     GLuint spot_vbo_handle;
     GLuint spot_vao_handle;
+    // Normal shaders
     GLuint mesh_program_handle;
     GLuint spot_program_handle;
+    // Compute shaders
+    GLuint lines_program_handle;
+};
+
+struct LineDataPoint
+{
+    GLfloat pos[4];
+    GLfloat data[4];
 };
 
 void          ra_parse_args(struct RandomAttractors *mdbrt, int argc, char *argv[]);
