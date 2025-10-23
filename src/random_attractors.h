@@ -29,7 +29,8 @@ struct RandomAttractors
 
     GLuint vbo_handle;
     GLuint vao_handle;
-    GLuint program_handle;
+    GLuint mesh_program_handle;
+    GLuint spot_program_handle;
 };
 
 void          ra_parse_args(struct RandomAttractors *mdbrt, int argc, char *argv[]);

@@ -31,7 +31,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${OUT_SHADERS_DIR})
 
 embed_shader_glsl(${SHADERS_DIR}/mesh_vertex.glsl ${OUT_SHADERS_DIR}/mesh_vertex_shader.h mesh_vertex_glsl)
 embed_shader_glsl(${SHADERS_DIR}/mesh_fragment.glsl ${OUT_SHADERS_DIR}/mesh_fragment_shader.h mesh_fragment_glsl)
-embed_shader_glsl(${SHADERS_DIR}/spot_vertex.glsl ${OUT_SHADERS_DIR}/spot_vertex_shader.h spot_vertex_glsl)
 embed_shader_glsl(${SHADERS_DIR}/spot_fragment.glsl ${OUT_SHADERS_DIR}/spot_fragment_shader.h spot_fragment_glsl)
 
 add_custom_target(embed_shaders DEPENDS

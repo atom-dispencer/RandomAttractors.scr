@@ -40,7 +40,7 @@ float vertices[] = {
     0.0f, -0.25f, -0.5774f, -0.5f, -0.25f, 0.2887f
 };
 
-float spotlight_vertices = {
+float spotlight_vertices[] = {
     // 0
     -1.0f,
     0.0f,
@@ -100,35 +100,6 @@ int main(int argc, char *argv[])
         printf("Couldn't set up OpenGL buffers: %d\n", ra.error);
         return ra.error;
     }
-
-    // Buffer things here for the moment...
-
-    glGenBuffers(1, &ra.vbo_handle);
-    glGenVertexArrays(1, &ra.vao_handle);
-
-    int mesh_vertex_handle   = 0;
-    int mesh_fragment_handle = 0;
-    int spot_fragment_handle = 0;
-    ra_compile_shader(mesh_vertex_glsl, SHADERTYPE_VERTEX, &mesh_vertex_handle);
-    ra_compile_shader(mesh_fragment_glsl, SHADERTYPE_FRAGMENT, &mesh_fragment_handle);
-    ra_compile_shader(spot_fragment_glsl, SHADERTYPE_FRAGMENT, &spot_fragment_handle);
-    ra_link_shader_program(mesh_vertex_handle, mesh_fragment_handle, &ra.program_handle);
-    ra_link_shader_program(mesh_vertex_handle, spot_fragment_handle, &ra.spot_program_handle);
-
-    glDeleteShader(mesh_vertex_handle);
-    glDeleteShader(mesh_fragment_handle);
-    glDeleteShader(spot_fragment_handle);
-
-    // Load vertex data
-    glBindBuffer(GL_ARRAY_BUFFER, ra.vbo_handle);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindVertexArray(ra.vao_handle);
-    glBindBuffer(GL_ARRAY_BUFFER, ra.vbo_handle);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
 
     //
     // Simulation
@@ -308,7 +279,32 @@ void _callback_ra_framebuffer_size(GLFWwindow *window, int width, int height)
 
 void ra_prepare_buffers(struct RandomAttractors *ra)
 {
-    // TODO set up vertex buffers etc etc etc
+    glGenBuffers(1, &ra->vbo_handle);
+    glGenVertexArrays(1, &ra->vao_handle);
+
+    GLuint mesh_vertex_handle   = 0;
+    GLuint mesh_fragment_handle = 0;
+    GLuint spot_fragment_handle = 0;
+    ra_compile_shader(mesh_vertex_glsl, SHADERTYPE_VERTEX, &mesh_vertex_handle);
+    ra_compile_shader(mesh_fragment_glsl, SHADERTYPE_FRAGMENT, &mesh_fragment_handle);
+    ra_compile_shader(spot_fragment_glsl, SHADERTYPE_FRAGMENT, &spot_fragment_handle);
+    ra_link_shader_program(mesh_vertex_handle, mesh_fragment_handle, &ra->mesh_program_handle);
+    ra_link_shader_program(mesh_vertex_handle, spot_fragment_handle, &ra->spot_program_handle);
+
+    glDeleteShader(mesh_vertex_handle);
+    glDeleteShader(mesh_fragment_handle);
+    glDeleteShader(spot_fragment_handle);
+
+    // Load vertex data
+    glBindBuffer(GL_ARRAY_BUFFER, ra->vbo_handle);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindVertexArray(ra->vao_handle);
+    glBindBuffer(GL_ARRAY_BUFFER, ra->vbo_handle);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
 }
 
 enum RA_Error ra_compile_shader(const GLchar *source, enum RA_ShaderType type, GLuint *handle)
@@ -394,12 +390,15 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     glDepthFunc(GL_LESS);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUseProgram(ra->program_handle);
+    glUseProgram(ra->mesh_program_handle);
 
-    GLuint y_rads_location = glGetUniformLocation(ra->program_handle, "y_rads");
+    GLuint y_rads_location = glGetUniformLocation(ra->mesh_program_handle, "y_rads");
     glUniform1f(y_rads_location, rotation_angle);
 
-    printf("y_rads = %f @ %d\n", rotation_angle, y_rads_location);
+    if (ra->is_preview)
+    {
+        printf("y_rads = %f @ %d\n", rotation_angle, y_rads_location);
+    }
 
     glBindVertexArray(ra->vao_handle);
     glLineWidth(5.0f);
