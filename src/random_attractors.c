@@ -18,52 +18,52 @@
 
 // clang-format on
 
-#define ROTATION_RADS_PER_SEC (0.1 * M_PI)
+#define ROTATION_RADS_PER_SEC (-0.1 * M_PI)
 
 float vertices[] = {
     // Edge 0: Apex → Base vertex 0
-    0.0f, 0.5f, 0.0f, -0.5f, -0.25f, 0.2887f,
+    0.0f, 0.75f, 0.0f, -0.75f, -0.25f, 0.2887f,
 
     // Edge 1: Apex → Base vertex 1
-    0.0f, 0.5f, 0.0f, 0.5f, -0.25f, 0.2887f,
+    0.0f, 0.75f, 0.0f, 0.5f, -0.25f, 0.2887f,
 
     // Edge 2: Apex → Base vertex 2
-    0.0f, 0.5f, 0.0f, 0.0f, -0.25f, -0.5774f,
+    0.0f, 0.75f, 0.0f, 0.0f, -0.25f, -0.5774f,
 
     // Edge 3: Base edge 0–1
-    -0.5f, -0.25f, 0.2887f, 0.5f, -0.25f, 0.2887f,
+    -0.75f, -0.25f, 0.2887f, 0.5f, -0.25f, 0.2887f,
 
     // Edge 4: Base edge 1–2
     0.5f, -0.25f, 0.2887f, 0.0f, -0.25f, -0.5774f,
 
     // Edge 5: Base edge 2–0
-    0.0f, -0.25f, -0.5774f, -0.5f, -0.25f, 0.2887f
+    0.0f, -0.25f, -0.5774f, -0.75f, -0.25f, 0.2887f
 };
 
 float spotlight_vertices[] = {
     // 0
     -1.0f,
-    0.0f,
+    -0.25f,
     -1.0f,
     // 0 -> 1
     -1.0f,
-    0.0f,
+    -0.25f,
     1.0f,
     // 1 -> 2
     1.0f,
-    0.0f,
+    -0.25f,
     1.0f,
     // 0
     -1.0f,
-    0.0f,
+    -0.25f,
     -1.0f,
     // 0 -> 2
     1.0f,
-    0.0f,
+    -0.25f,
     1.0f,
     // 2 -> 3
     1.0f,
-    0.0f,
+    -0.25f,
     -1.0f,
 };
 
@@ -279,28 +279,35 @@ void _callback_ra_framebuffer_size(GLFWwindow *window, int width, int height)
 
 void ra_prepare_buffers(struct RandomAttractors *ra)
 {
-    glGenBuffers(1, &ra->vbo_handle);
-    glGenVertexArrays(1, &ra->vao_handle);
+    glGenBuffers(1, &ra->mesh_vbo_handle);
+    glGenBuffers(1, &ra->spot_vbo_handle);
+    glGenVertexArrays(1, &ra->mesh_vao_handle);
+    glGenVertexArrays(1, &ra->spot_vao_handle);
 
-    GLuint mesh_vertex_handle   = 0;
-    GLuint mesh_fragment_handle = 0;
-    GLuint spot_fragment_handle = 0;
-    ra_compile_shader(mesh_vertex_glsl, SHADERTYPE_VERTEX, &mesh_vertex_handle);
-    ra_compile_shader(mesh_fragment_glsl, SHADERTYPE_FRAGMENT, &mesh_fragment_handle);
-    ra_compile_shader(spot_fragment_glsl, SHADERTYPE_FRAGMENT, &spot_fragment_handle);
-    ra_link_shader_program(mesh_vertex_handle, mesh_fragment_handle, &ra->mesh_program_handle);
-    ra_link_shader_program(mesh_vertex_handle, spot_fragment_handle, &ra->spot_program_handle);
+    GLuint mesh_vs_handle = 0;
+    GLuint mesh_fs_handle = 0;
+    GLuint spot_fs_handle = 0;
+    ra_compile_shader(mesh_vertex_glsl, SHADERTYPE_VERTEX, &mesh_vs_handle);
+    ra_compile_shader(mesh_fragment_glsl, SHADERTYPE_FRAGMENT, &mesh_fs_handle);
+    ra_compile_shader(spot_fragment_glsl, SHADERTYPE_FRAGMENT, &spot_fs_handle);
+    ra_link_shader_program(mesh_vs_handle, mesh_fs_handle, &ra->mesh_program_handle);
+    ra_link_shader_program(mesh_vs_handle, spot_fs_handle, &ra->spot_program_handle);
 
-    glDeleteShader(mesh_vertex_handle);
-    glDeleteShader(mesh_fragment_handle);
-    glDeleteShader(spot_fragment_handle);
+    glDeleteShader(mesh_vs_handle);
+    glDeleteShader(mesh_fs_handle);
+    glDeleteShader(spot_fs_handle);
 
     // Load vertex data
-    glBindBuffer(GL_ARRAY_BUFFER, ra->vbo_handle);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindVertexArray(ra->vao_handle);
-    glBindBuffer(GL_ARRAY_BUFFER, ra->vbo_handle);
+    glBindVertexArray(ra->spot_vao_handle);
+    glBindBuffer(GL_ARRAY_BUFFER, ra->spot_vbo_handle);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(spotlight_vertices), spotlight_vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(ra->mesh_vao_handle);
+    glBindBuffer(GL_ARRAY_BUFFER, ra->mesh_vbo_handle);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
@@ -390,9 +397,27 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     glDepthFunc(GL_LESS);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    //
+    // Spotlight
+    //
+
+    GLuint y_rads_location;
+
+    glUseProgram(ra->spot_program_handle);
+
+    y_rads_location = glGetUniformLocation(ra->spot_program_handle, "y_rads");
+    glUniform1f(y_rads_location, y_rads_location);
+
+    glBindVertexArray(ra->spot_vao_handle);
+    glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 3));
+
+    //
+    // Mesh
+    //
+
     glUseProgram(ra->mesh_program_handle);
 
-    GLuint y_rads_location = glGetUniformLocation(ra->mesh_program_handle, "y_rads");
+    y_rads_location = glGetUniformLocation(ra->mesh_program_handle, "y_rads");
     glUniform1f(y_rads_location, rotation_angle);
 
     if (ra->is_preview)
@@ -400,7 +425,7 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
         printf("y_rads = %f @ %d\n", rotation_angle, y_rads_location);
     }
 
-    glBindVertexArray(ra->vao_handle);
+    glBindVertexArray(ra->mesh_vao_handle);
     glLineWidth(5.0f);
     glDrawArrays(GL_LINES, 0, sizeof(vertices) / (sizeof(float) * 3));
 }

@@ -27,8 +27,10 @@ struct RandomAttractors
     bool          is_preview;
     GLFWwindow   *window;
 
-    GLuint vbo_handle;
-    GLuint vao_handle;
+    GLuint mesh_vbo_handle;
+    GLuint mesh_vao_handle;
+    GLuint spot_vbo_handle;
+    GLuint spot_vao_handle;
     GLuint mesh_program_handle;
     GLuint spot_program_handle;
 };

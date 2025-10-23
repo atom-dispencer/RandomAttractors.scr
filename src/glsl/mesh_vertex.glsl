@@ -105,7 +105,7 @@ void main()
 
   float FOV_RADS = 3.14159 * 0.5;     // quarter circle
   float ASPECT_RATIO = 1.7777;        // 16:9
-  float PITCH_RADS = 3.14159 * -0.25; // eighth circle
+  float PITCH_RADS = 3.14159 * 0.25; // eighth circle
 
   float ortho_scale = 1.0;
   float o_left = -ortho_scale * ASPECT_RATIO;
