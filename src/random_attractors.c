@@ -3,7 +3,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,8 +16,6 @@
 #include "spot_vertex_shader.h"
 
 // clang-format on
-
-#define ROTATION_RADS_PER_SEC (-0.1 * M_PI)
 
 float vertices[] = {
     // Edge 0: Apex → Base vertex 0
@@ -334,7 +331,9 @@ enum RA_Error ra_compile_shader(const GLchar *source, enum RA_ShaderType type, G
             return RA_ERROR_INIT_SHADERTYPE;
     }
 
+    printf("\n ================================================== \n");
     printf("Compiling shader: \n\n%s\n\n", source);
+    printf("\n ================================================== \n");
 
     *handle = glCreateShader(gl_shader_type);
     glShaderSource(*handle, 1, &source, NULL);
@@ -383,8 +382,7 @@ void ra_compute_next_step(struct RandomAttractors *ra)
 
 void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
 {
-    double uptime_secs    = uptime_nanos / 1.0e9d;
-    float  rotation_angle = uptime_secs * ROTATION_RADS_PER_SEC;
+    double uptime_secs = uptime_nanos / 1.0e9d;
 
     // TODO Call shaders to re-render the screen
     // Shaders will need to:
@@ -401,13 +399,9 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     // Spotlight
     //
 
-    GLuint y_rads_location;
+    GLuint time_secs_location;
 
     glUseProgram(ra->spot_program_handle);
-
-    y_rads_location = glGetUniformLocation(ra->spot_program_handle, "y_rads");
-    glUniform1f(y_rads_location, y_rads_location);
-
     glBindVertexArray(ra->spot_vao_handle);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 3));
 
@@ -417,12 +411,12 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
 
     glUseProgram(ra->mesh_program_handle);
 
-    y_rads_location = glGetUniformLocation(ra->mesh_program_handle, "y_rads");
-    glUniform1f(y_rads_location, rotation_angle);
+    time_secs_location = glGetUniformLocation(ra->mesh_program_handle, "time_secs");
+    glUniform1f(time_secs_location, uptime_secs);
 
     if (ra->is_preview)
     {
-        printf("y_rads = %f @ %d\n", rotation_angle, y_rads_location);
+        printf("y_rads = %f @ %d\n", uptime_secs, time_secs_location);
     }
 
     glBindVertexArray(ra->mesh_vao_handle);

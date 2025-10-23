@@ -1,8 +1,8 @@
 #version 330 core
 layout(location = 0) in vec3 aPos;
-uniform float y_rads;
+uniform float time_secs = 0;
 
-out vec3 vColor;
+out vec4 vertex_colour;
 
 //
 // A transformation matrix which translates (moves/slides) a vector in each
@@ -96,17 +96,26 @@ mat4 scale(vec3 s)
     );
 }
 
+vec4 calculate_colour()
+{
+  return vec4(normalize(aPos * 0.5 + 0.5), 1.0);
+}
+
 //
 // Let's do some shading!
 //
 void main()
 {
-  vColor = normalize(aPos * 0.5 + 0.5);
+  vertex_colour = calculate_colour();
 
-  float FOV_RADS = 3.14159 * 0.5;     // quarter circle
-  float ASPECT_RATIO = 1.7777;        // 16:9
-  float PITCH_RADS = 3.14159 * 0.25; // eighth circle
+  float pi = 3.1415926f;
 
+  float FOV_RADS = pi * 0.5;                  // quarter circle
+  float ASPECT_RATIO = 1.7777;                // 16:9
+  float PITCH_RADS = pi * 0.25;               // eighth circle
+  float ROTATION_RADS_PER_SEC = pi * -0.1;    // 
+
+  float y_rads = time_secs * ROTATION_RADS_PER_SEC;
   float ortho_scale = 1.0;
   float o_left = -ortho_scale * ASPECT_RATIO;
   float o_right = ortho_scale * ASPECT_RATIO;
