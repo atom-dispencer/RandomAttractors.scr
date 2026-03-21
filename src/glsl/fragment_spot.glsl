@@ -1,8 +1,12 @@
 #version 460 core
 
+uniform sampler2D spot_texture;
+
+in vec2 TexCoord;
+
 out vec4 FragColor;
 
 void main()
 {
-  FragColor = vec4(0.5, 0.5, 0.5, 1.0f);
+  FragColor = texture(spot_texture, TexCoord);
 }

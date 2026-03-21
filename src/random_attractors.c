@@ -27,22 +27,22 @@
 
 float spotlight_vertices[] = {
     // 0
-    /* XYZW */ -1.0f, -0.25f, -1.0f, 1.0f, /* Tex XY */ 1.0f, 1.0f,
+    /* XYZW */ -1.0f, -0.25f, -1.0f, 1.0f, /* Tex XY */ 0.0f, 0.0f,
 
     // 0 -> 1
-    /* XYZW */ -1.0f, -0.25f, 1.0f,  1.0f, /* Tex XY */ 1.0f, 1.0f,
+    /* XYZW */ -1.0f, -0.25f, 1.0f,  1.0f, /* Tex XY */ 0.0f, 1.0f,
 
     // 1 -> 2
     /* XYZW */ 1.0f, -0.25f, 1.0f,   1.0f, /* Tex XY */ 1.0f, 1.0f,
 
     // 0
-    /* XYZW */ -1.0f, -0.25f, -1.0f, 1.0f, /* Tex XY */ 1.0f, 1.0f,
+    /* XYZW */ -1.0f, -0.25f, -1.0f, 1.0f, /* Tex XY */ 0.0f, 0.0f,
 
     // 0 -> 2
     /* XYZW */ 1.0f, -0.25f, 1.0f,   1.0f, /* Tex XY */ 1.0f, 1.0f,
 
     // 2 -> 3
-    /* XYZW */ 1.0f, -0.25f, -1.0f,  1.0f, /* Tex XY */ 1.0f, 1.0f
+    /* XYZW */ 1.0f, -0.25f, -1.0f,  1.0f, /* Tex XY */ 1.0f, 0.0f
 };
 
 int main(int argc, char *argv[])
@@ -300,6 +300,7 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(4 * sizeof(float)));
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
     // int series            = 100;
@@ -456,8 +457,9 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     //
 
     glUseProgram(ra->spot_program_handle);
+    glBindTexture(GL_TEXTURE_2D, ra->bluetit_tex_handle);
     glBindVertexArray(ra->spot_vao_handle);
-    glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 3));
+    glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 6));
 
     //
     // Mesh
