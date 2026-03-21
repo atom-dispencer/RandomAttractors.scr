@@ -29,17 +29,23 @@ set(OUT_SHADERS_DIR ${CMAKE_BINARY_DIR}/shaders)
 file(MAKE_DIRECTORY ${OUT_SHADERS_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${OUT_SHADERS_DIR})
 
-embed_shader_glsl(${SHADERS_DIR}/mesh_vertex.glsl ${OUT_SHADERS_DIR}/mesh_vertex_shader.h mesh_vertex_glsl)
-embed_shader_glsl(${SHADERS_DIR}/mesh_fragment.glsl ${OUT_SHADERS_DIR}/mesh_fragment_shader.h mesh_fragment_glsl)
-embed_shader_glsl(${SHADERS_DIR}/spot_fragment.glsl ${OUT_SHADERS_DIR}/spot_fragment_shader.h spot_fragment_glsl)
+# Vertex
+embed_shader_glsl(${SHADERS_DIR}/vertex_mesh.glsl ${OUT_SHADERS_DIR}/vertex_mesh.h vertex_mesh_glsl)
+embed_shader_glsl(${SHADERS_DIR}/vertex_spot.glsl ${OUT_SHADERS_DIR}/vertex_spot.h vertex_spot_glsl)
+# Fragment
+embed_shader_glsl(${SHADERS_DIR}/fragment_mesh.glsl ${OUT_SHADERS_DIR}/fragment_mesh.h fragment_mesh_glsl)
+embed_shader_glsl(${SHADERS_DIR}/fragment_spot.glsl ${OUT_SHADERS_DIR}/fragment_spot.h fragment_spot_glsl)
+# Compute
 embed_shader_glsl(${SHADERS_DIR}/compute_points.glsl ${OUT_SHADERS_DIR}/compute_points.h compute_points_glsl)
 embed_shader_glsl(${SHADERS_DIR}/compute_lines.glsl ${OUT_SHADERS_DIR}/compute_lines.h compute_lines_glsl)
 
 add_custom_target(embed_shaders DEPENDS
-    ${CMAKE_BINARY_DIR}/shaders/mesh_vertex_shader.h
-    ${CMAKE_BINARY_DIR}/shaders/mesh_fragment_shader.h
-    ${CMAKE_BINARY_DIR}/shaders/spot_vertex_shader.h
-    ${CMAKE_BINARY_DIR}/shaders/spot_fragment_shader.h
+    # Vertex
+    ${CMAKE_BINARY_DIR}/shaders/vertex_mesh.h
+    ${CMAKE_BINARY_DIR}/shaders/vertex_spot.h
+    # Fragment
+    ${CMAKE_BINARY_DIR}/shaders/fragment_mesh.h
+    ${CMAKE_BINARY_DIR}/shaders/fragment_spot.h
 )
 add_dependencies(RandomAttractors embed_shaders)
 
@@ -61,8 +67,10 @@ message(STATUS ${SOURCE_FILES})
 
 # Variable for the Libs to add to the Linkers
 if (WIN32)
-	set(LIBS glfw opengl32 glad)
+    set(CMAKE_C_FLAGS "-std=c17 -D_UCRT")
+	set(LIBS glfw opengl32 glad ucrt)
 elseif (UNIX)
+    set(CMAKE_C_FLAGS "-std=c17")
 	set(LIBS glfw GL glad)
 endif ()
 

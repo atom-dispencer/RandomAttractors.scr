@@ -10,10 +10,13 @@
 
 #include "random_attractors.h"
 
-#include "mesh_fragment_shader.h"
-#include "mesh_vertex_shader.h"
-#include "spot_fragment_shader.h"
-#include "spot_vertex_shader.h"
+// Vertex Shaders
+#include "vertex_mesh.h"
+#include "vertex_spot.h"
+// Fragment Shaders
+#include "fragment_mesh.h"
+#include "fragment_spot.h"
+// Compute Shaders
 #include "compute_points.h"
 #include "compute_lines.h"
 
@@ -255,9 +258,9 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     GLuint mesh_fs_handle  = 0;
     GLuint spot_fs_handle  = 0;
     GLuint lines_cs_handle = 0;
-    ra_compile_shader(mesh_vertex_glsl, SHADERTYPE_VERTEX, &mesh_vs_handle);
-    ra_compile_shader(mesh_fragment_glsl, SHADERTYPE_FRAGMENT, &mesh_fs_handle);
-    ra_compile_shader(spot_fragment_glsl, SHADERTYPE_FRAGMENT, &spot_fs_handle);
+    ra_compile_shader(vertex_mesh_glsl, SHADERTYPE_VERTEX, &mesh_vs_handle);
+    ra_compile_shader(fragment_mesh_glsl, SHADERTYPE_FRAGMENT, &mesh_fs_handle);
+    ra_compile_shader(fragment_spot_glsl, SHADERTYPE_FRAGMENT, &spot_fs_handle);
     ra_compile_shader(compute_lines_glsl, SHADERTYPE_COMPUTE, &lines_cs_handle);
     ra_link_shader_program(mesh_vs_handle, mesh_fs_handle, &ra->mesh_program_handle);
     ra_link_shader_program(mesh_vs_handle, spot_fs_handle, &ra->spot_program_handle);
