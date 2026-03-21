@@ -36,6 +36,8 @@ struct RandomAttractors
     GLuint spot_program_handle;
     // Compute shaders
     GLuint lines_program_handle;
+
+    GLuint bluetit_tex_handle;
 };
 
 struct LineDataPoint
@@ -49,6 +51,7 @@ void          ra_print_help();
 void          ra_create_glfw_window(struct RandomAttractors *ra);
 void          _callback_ra_framebuffer_size(GLFWwindow *window, int width, int height);
 void          ra_prepare_buffers(struct RandomAttractors *ra);
+void          ra_prepare_textures(struct RandomAttractors *ra);
 enum RA_Error ra_compile_shader(const GLchar *source, enum RA_ShaderType type, GLuint *handle);
 enum RA_Error ra_link_shader_program(
     GLuint vertex_handle, GLuint frag_handle, GLuint *program_handle);

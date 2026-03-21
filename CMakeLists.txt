@@ -46,8 +46,50 @@ add_custom_target(embed_shaders DEPENDS
     # Fragment
     ${CMAKE_BINARY_DIR}/shaders/fragment_mesh.h
     ${CMAKE_BINARY_DIR}/shaders/fragment_spot.h
+    # Compute
+    ${CMAKE_BINARY_DIR}/shaders/compute_points.h
+    ${CMAKE_BINARY_DIR}/shaders/compute_lines.h
 )
 add_dependencies(RandomAttractors embed_shaders)
+
+#
+# Embed Images
+#
+
+function(embed_image IMAGE_FILE OUT_HEADER VAR_NAME)
+    message("Embedding image: ${IMAGE_FILE}")
+
+    # Read file as HEX (portable way to handle binary in CMake)
+    file(READ ${IMAGE_FILE} IMAGE_HEX HEX)
+
+    # Convert hex string into comma-separated byte values
+    string(REGEX MATCHALL ".." IMAGE_BYTES "${IMAGE_HEX}")
+    string(JOIN ",0x" IMAGE_BYTES ${IMAGE_BYTES})
+    set(IMAGE_BYTES "0x${IMAGE_BYTES}")
+
+    # Get file size
+    file(SIZE ${IMAGE_FILE} IMAGE_SIZE)
+
+    # Write header
+    file(WRITE ${OUT_HEADER}
+        "#pragma once\n"
+        "#include <stddef.h>\n\n"
+        "static const unsigned char ${VAR_NAME}[] = {${IMAGE_BYTES}};\n"
+        "static const size_t ${VAR_NAME}_size = ${IMAGE_SIZE};\n"
+    )
+endfunction()
+
+set(IMAGES_DIR ${CMAKE_SOURCE_DIR}/src/images)
+set(OUT_IMAGES_DIR ${CMAKE_BINARY_DIR}/images)
+file(MAKE_DIRECTORY ${OUT_IMAGES_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${OUT_IMAGES_DIR})
+
+embed_image(${IMAGES_DIR}/bluetit.jpg ${OUT_IMAGES_DIR}/bluetit.h bluetit_jpg_data)
+
+add_custom_target(embed_images DEPENDS
+    ${CMAKE_BINARY_DIR}/images/bluetit.h
+)
+add_dependencies(RandomAttractors embed_images)
 
 #
 # Remaining CMake things...

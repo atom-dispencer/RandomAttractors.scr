@@ -10,6 +10,8 @@
 
 #include "random_attractors.h"
 
+#include "stb_image.h"
+
 // Vertex Shaders
 #include "vertex_mesh.h"
 #include "vertex_spot.h"
@@ -19,22 +21,28 @@
 // Compute Shaders
 #include "compute_points.h"
 #include "compute_lines.h"
+#include "bluetit.h"
 
 // clang-format on
 
 float spotlight_vertices[] = {
     // 0
-    -1.0f, -0.25f, -1.0f,
+    /* XYZW */ -1.0f, -0.25f, -1.0f, 1.0f, /* Tex XY */ 1.0f, 1.0f,
+
     // 0 -> 1
-    -1.0f, -0.25f, 1.0f,
+    /* XYZW */ -1.0f, -0.25f, 1.0f,  1.0f, /* Tex XY */ 1.0f, 1.0f,
+
     // 1 -> 2
-    1.0f, -0.25f, 1.0f,
+    /* XYZW */ 1.0f, -0.25f, 1.0f,   1.0f, /* Tex XY */ 1.0f, 1.0f,
+
     // 0
-    -1.0f, -0.25f, -1.0f,
+    /* XYZW */ -1.0f, -0.25f, -1.0f, 1.0f, /* Tex XY */ 1.0f, 1.0f,
+
     // 0 -> 2
-    1.0f, -0.25f, 1.0f,
+    /* XYZW */ 1.0f, -0.25f, 1.0f,   1.0f, /* Tex XY */ 1.0f, 1.0f,
+
     // 2 -> 3
-    1.0f, -0.25f, -1.0f
+    /* XYZW */ 1.0f, -0.25f, -1.0f,  1.0f, /* Tex XY */ 1.0f, 1.0f
 };
 
 int main(int argc, char *argv[])
@@ -68,6 +76,13 @@ int main(int argc, char *argv[])
     if (ra.error != RA_OK)
     {
         printf("Couldn't set up OpenGL buffers: %d\n", ra.error);
+        return ra.error;
+    }
+
+    ra_prepare_textures(&ra);
+    if (ra.error != RA_OK)
+    {
+        printf("Couldn't set up OpenGL texture: %d\n", ra.error);
         return ra.error;
     }
 
@@ -256,18 +271,21 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
 
     GLuint mesh_vs_handle  = 0;
     GLuint mesh_fs_handle  = 0;
+    GLuint spot_vs_handle  = 0;
     GLuint spot_fs_handle  = 0;
     GLuint lines_cs_handle = 0;
     ra_compile_shader(vertex_mesh_glsl, SHADERTYPE_VERTEX, &mesh_vs_handle);
+    ra_compile_shader(vertex_spot_glsl, SHADERTYPE_VERTEX, &spot_vs_handle);
     ra_compile_shader(fragment_mesh_glsl, SHADERTYPE_FRAGMENT, &mesh_fs_handle);
     ra_compile_shader(fragment_spot_glsl, SHADERTYPE_FRAGMENT, &spot_fs_handle);
     ra_compile_shader(compute_lines_glsl, SHADERTYPE_COMPUTE, &lines_cs_handle);
     ra_link_shader_program(mesh_vs_handle, mesh_fs_handle, &ra->mesh_program_handle);
-    ra_link_shader_program(mesh_vs_handle, spot_fs_handle, &ra->spot_program_handle);
+    ra_link_shader_program(spot_vs_handle, spot_fs_handle, &ra->spot_program_handle);
     ra_link_shader_program(lines_cs_handle, -1, &ra->lines_program_handle);
 
     glDeleteShader(mesh_vs_handle);
     glDeleteShader(mesh_fs_handle);
+    glDeleteShader(spot_vs_handle);
     glDeleteShader(spot_fs_handle);
     glDeleteShader(lines_cs_handle);
 
@@ -277,7 +295,10 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     glBindBuffer(GL_ARRAY_BUFFER, ra->spot_vbo_handle);
     glBufferData(GL_ARRAY_BUFFER, sizeof(spotlight_vertices), spotlight_vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    // 0 = position (x, y, z, w)
+    // 1 = texture coordinate (x, y)
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(4 * sizeof(float)));
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 
@@ -303,6 +324,31 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
+}
+
+void ra_prepare_textures(struct RandomAttractors *ra)
+{
+    int width = -1, height = -1, type = -1;
+
+    unsigned char *bluetit_data = stbi_load_from_memory(bluetit_jpg_data, bluetit_jpg_data_size, &width, &height, &type, 0);
+    if (bluetit_data)
+    {
+        glGenTextures(1, &ra->bluetit_tex_handle);
+        glBindTexture(GL_TEXTURE_2D, ra->bluetit_tex_handle);
+        // wrap/filter
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // data
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, bluetit_data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        printf("Failed to generate bluetit texture!\n");
+    }
+    stbi_image_free(bluetit_data);
 }
 
 enum RA_Error ra_compile_shader(const GLchar *source, enum RA_ShaderType type, GLuint *handle)
@@ -409,8 +455,6 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     // Spotlight
     //
 
-    GLuint time_secs_location;
-
     glUseProgram(ra->spot_program_handle);
     glBindVertexArray(ra->spot_vao_handle);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 3));
@@ -420,13 +464,12 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     //
 
     glUseProgram(ra->mesh_program_handle);
-
-    time_secs_location = glGetUniformLocation(ra->mesh_program_handle, "time_secs");
+    GLuint time_secs_location = glGetUniformLocation(ra->mesh_program_handle, "time_secs");
     glUniform1f(time_secs_location, uptime_secs);
 
     if (ra->is_preview)
     {
-        printf("y_rads = %f @ %d\n", uptime_secs, time_secs_location);
+        printf("time_secs=%f; uniform=%d\n", uptime_secs, time_secs_location);
     }
 
     glBindVertexArray(ra->lines_vao_handle);
