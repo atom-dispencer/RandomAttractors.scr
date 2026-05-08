@@ -124,7 +124,7 @@ void main()
   gl_Position = //
     // orthographic(o_left, o_right, o_top, o_bottom, -10, 10) // 4th - Apply the projection matrix
     perspective(FOV_RADS, ASPECT_RATIO, Z_NEAR, Z_FAR)          // 4th - Apply the projection matrix
-    * translate(vec3(0.0, 0.0, -5))                         // 3rd - Translate away from the camera
+    * translate(vec3(0.0, 0.0, -2))                         // 3rd - Translate away from the camera
     * x_rotation(PITCH_RADS)                                // 2nd - Pitch the mesh like we're looking from above
     // * y_rotation(y_rads)                                    // 1st - Yaw the mesh so it spins nicely
     // 

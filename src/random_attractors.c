@@ -21,7 +21,7 @@
 // Compute Shaders
 #include "compute_points.h"
 #include "compute_lines.h"
-#include "bluetit.h"
+#include "spotlight.h"
 
 // clang-format on
 
@@ -331,25 +331,25 @@ void ra_prepare_textures(struct RandomAttractors *ra)
 {
     int width = -1, height = -1, type = -1;
 
-    unsigned char *bluetit_data = stbi_load_from_memory(bluetit_jpg_data, bluetit_jpg_data_size, &width, &height, &type, 0);
-    if (bluetit_data)
+    unsigned char *spotlight_data = stbi_load_from_memory(spotlight_png_data, spotlight_png_data_size, &width, &height, &type, 0);
+    if (spotlight_data)
     {
-        glGenTextures(1, &ra->bluetit_tex_handle);
-        glBindTexture(GL_TEXTURE_2D, ra->bluetit_tex_handle);
+        glGenTextures(1, &ra->spotlight_tex_handle);
+        glBindTexture(GL_TEXTURE_2D, ra->spotlight_tex_handle);
         // wrap/filter
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         // data
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, bluetit_data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, spotlight_data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
     {
-        printf("Failed to generate bluetit texture!\n");
+        printf("Failed to generate spotlight texture!\n");
     }
-    stbi_image_free(bluetit_data);
+    stbi_image_free(spotlight_data);
 }
 
 enum RA_Error ra_compile_shader(const GLchar *source, enum RA_ShaderType type, GLuint *handle)
@@ -457,7 +457,7 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     //
 
     glUseProgram(ra->spot_program_handle);
-    glBindTexture(GL_TEXTURE_2D, ra->bluetit_tex_handle);
+    glBindTexture(GL_TEXTURE_2D, ra->spotlight_tex_handle);
     glBindVertexArray(ra->spot_vao_handle);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 6));
 

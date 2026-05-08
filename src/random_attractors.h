@@ -37,7 +37,7 @@ struct RandomAttractors
     // Compute shaders
     GLuint lines_program_handle;
 
-    GLuint bluetit_tex_handle;
+    GLuint spotlight_tex_handle;
 };
 
 struct LineDataPoint
