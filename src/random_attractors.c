@@ -10,7 +10,7 @@
 
 #include "random_attractors.h"
 
-#include "stb_image.h"
+#include "stb/stb_image.h"
 
 // Vertex Shaders
 #include "vertex_mesh.h"

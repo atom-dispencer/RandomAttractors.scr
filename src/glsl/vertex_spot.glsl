@@ -108,12 +108,13 @@ void main()
   float pi = 3.1415926f;
   float tau = 2*pi;
 
-  float FOV_RADS = tau * 0.25;                  // quarter circle
-  float ASPECT_RATIO = 1.7777;                  // 16:9
   float PITCH_RADS = tau * 0.125;               // eighth circle
-  float ROTATION_RADS_PER_SEC = tau * -0.05;    // 
+  float ASPECT_RATIO = 1.7777;                  // 16:9
 
-  float y_rads = time_secs * ROTATION_RADS_PER_SEC;
+  float FOV_RADS = tau * 0.25;                  // quarter circle
+  float Z_NEAR = 0.1;
+  float Z_FAR = 100.0;
+
   float ortho_scale = 1.0;
   float o_left = -ortho_scale * ASPECT_RATIO;
   float o_right = ortho_scale * ASPECT_RATIO;
@@ -121,10 +122,11 @@ void main()
   float o_bottom = ortho_scale;
 
   gl_Position = //
-    orthographic(o_left, o_right, o_top, o_bottom, -10, 10) // 4th - Apply the projection matrix
+    // orthographic(o_left, o_right, o_top, o_bottom, -10, 10) // 4th - Apply the projection matrix
+    perspective(FOV_RADS, ASPECT_RATIO, Z_NEAR, Z_FAR)          // 4th - Apply the projection matrix
     * translate(vec3(0.0, 0.0, -5))                         // 3rd - Translate away from the camera
     * x_rotation(PITCH_RADS)                                // 2nd - Pitch the mesh like we're looking from above
-    * y_rotation(y_rads)                                    // 1st - Yaw the mesh so it spins nicely
+    // * y_rotation(y_rads)                                    // 1st - Yaw the mesh so it spins nicely
     // 
     * aPos;
 }
