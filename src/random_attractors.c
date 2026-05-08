@@ -25,24 +25,26 @@
 
 // clang-format on
 
+// Spotlight sits just below the XZ plane (y=0.05) to prevent z-fighting
+// All mesh geometry will be transformed to sit above the XZ plane
 float spotlight_vertices[] = {
     // 0
-    /* XYZW */ -1.0f, -0.25f, -1.0f, 1.0f, /* Tex XY */ 0.0f, 0.0f,
+    /* XYZW */ -1.0f, -0.05f, -1.0f, 1.0f, /* Tex XY */ 0.0f, 0.0f,
 
     // 0 -> 1
-    /* XYZW */ -1.0f, -0.25f, 1.0f,  1.0f, /* Tex XY */ 0.0f, 1.0f,
+    /* XYZW */ -1.0f, -0.05f, 1.0f,  1.0f, /* Tex XY */ 0.0f, 1.0f,
 
     // 1 -> 2
-    /* XYZW */ 1.0f, -0.25f, 1.0f,   1.0f, /* Tex XY */ 1.0f, 1.0f,
+    /* XYZW */ 1.0f, -0.05f, 1.0f,   1.0f, /* Tex XY */ 1.0f, 1.0f,
 
     // 0
-    /* XYZW */ -1.0f, -0.25f, -1.0f, 1.0f, /* Tex XY */ 0.0f, 0.0f,
+    /* XYZW */ -1.0f, -0.05f, -1.0f, 1.0f, /* Tex XY */ 0.0f, 0.0f,
 
     // 0 -> 2
-    /* XYZW */ 1.0f, -0.25f, 1.0f,   1.0f, /* Tex XY */ 1.0f, 1.0f,
+    /* XYZW */ 1.0f, -0.05f, 1.0f,   1.0f, /* Tex XY */ 1.0f, 1.0f,
 
     // 2 -> 3
-    /* XYZW */ 1.0f, -0.25f, -1.0f,  1.0f, /* Tex XY */ 1.0f, 0.0f
+    /* XYZW */ 1.0f, -0.05f, -1.0f,  1.0f, /* Tex XY */ 1.0f, 0.0f
 };
 
 int main(int argc, char *argv[])
