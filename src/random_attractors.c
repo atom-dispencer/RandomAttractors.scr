@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,6 +51,7 @@ float spotlight_vertices[] = {
 int main(int argc, char *argv[])
 {
     struct RandomAttractors ra = { 0 };
+    timespec_get(&ra.start_ts, TIME_UTC);
 
     //
     // Parse program (screensaver) arguments
@@ -58,7 +60,7 @@ int main(int argc, char *argv[])
     ra_parse_args(&ra, argc, argv);
     if (ra.error != RA_OK)
     {
-        printf("Couldn't parse arguments: %d\n", ra.error);
+        ra_log(&ra, "Couldn't parse arguments: %d\n", ra.error);
         ra_print_help();
         return ra.error;
     }
@@ -70,21 +72,21 @@ int main(int argc, char *argv[])
     ra_create_glfw_window(&ra);
     if (ra.error != RA_OK)
     {
-        printf("Couldn't create GLFW window: %d\n", ra.error);
+        ra_log(&ra, "Couldn't create GLFW window: %d\n", ra.error);
         return ra.error;
     }
 
     ra_prepare_buffers(&ra);
     if (ra.error != RA_OK)
     {
-        printf("Couldn't set up OpenGL buffers: %d\n", ra.error);
+        ra_log(&ra, "Couldn't set up OpenGL buffers: %d\n", ra.error);
         return ra.error;
     }
 
     ra_prepare_textures(&ra);
     if (ra.error != RA_OK)
     {
-        printf("Couldn't set up OpenGL texture: %d\n", ra.error);
+        ra_log(&ra, "Couldn't set up OpenGL texture: %d\n", ra.error);
         return ra.error;
     }
 
@@ -124,10 +126,7 @@ int main(int argc, char *argv[])
             || GLFW_PRESS == glfwGetKey(ra.window, GLFW_KEY_ENTER)
             || GLFW_PRESS == glfwGetMouseButton(ra.window, GLFW_MOUSE_BUTTON_LEFT))
         {
-            if (ra.is_preview)
-            {
-                printf("Input detected! Triggering close...\n");
-            }
+            ra_log(&ra, "Input detected! Triggering close...\n");
             glfwSetWindowShouldClose(ra.window, GLFW_TRUE);
         }
 
@@ -141,7 +140,10 @@ int main(int argc, char *argv[])
     // Shutdown
     //
 
+    ra_log(&ra, "Terminating GLFW...\n");
     glfwTerminate();
+
+    ra_log(&ra, "Goodbye.\n");
     return RA_OK;
 }
 
@@ -187,8 +189,24 @@ void ra_print_help()
     printf("      RandomAttractors.scr /p\n\n");
 }
 
+void ra_log(struct RandomAttractors *ra, const char *format, ...)
+{
+    if (!ra->is_preview) return;
+
+    struct timespec now;
+    timespec_get(&now, TIME_UTC);
+    long long diff_nanos = (now.tv_sec - ra->start_ts.tv_sec) * 1000000000LL + (now.tv_nsec - ra->start_ts.tv_nsec);
+    double seconds = diff_nanos / 1e9;
+    printf("[%7.3f] ", seconds);
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+}
+
 void ra_create_glfw_window(struct RandomAttractors *ra)
 {
+    ra_log(ra, "Init GLFW...\n");
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -198,6 +216,8 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
     // Create and configure the GLFW window
     //
 
+    ra_log(ra, "Creating GLFW window...\n");
+
     GLFWwindow *window = NULL;
     int         width  = 0;
     int         height = 0;
@@ -206,7 +226,7 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
 
     if (ra->is_preview)
     {
-        printf("Creating preview window\n");
+        ra_log(ra, "Creating preview window\n");
         width  = 800;
         height = 600;
         window = glfwCreateWindow(width, height, "RandomAttractors.scr", NULL, NULL);
@@ -225,7 +245,7 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
 
     if (window == NULL)
     {
-        printf("Failed to create GLFW window.\n");
+        ra_log(ra, "Failed to create GLFW window.\n");
         glfwTerminate();
         ra->error = RA_ERROR_INIT_GLFWWINDOW;
         return;
@@ -236,9 +256,10 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
     // Load GLAD bindings for 'gl' functions
     //
 
+    ra_log(ra, "Loading GLAD...\n");
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        printf("Failed to initialize GLAD\n");
+        ra_log(ra, "Failed to initialize GLAD\n");
         ra->error = RA_ERROR_INIT_GLAD;
         return;
     }
@@ -247,6 +268,7 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
     // Congrats! You can now call OpenGL 'gl' functions
     //
 
+    ra_log(ra, "Configuring OpenGL viewport and callbacks...\n");
     glViewport(0, 0, width, height);
     glfwSetFramebufferSizeCallback(window, _callback_ra_framebuffer_size);
     glEnable(GL_BLEND);
@@ -257,6 +279,7 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
 
     ra->window = window;
     ra->error  = RA_OK;
+    ra_log(ra, "GLFW window created.\n");
 }
 
 void _callback_ra_framebuffer_size(GLFWwindow *window, int width, int height)
@@ -266,6 +289,7 @@ void _callback_ra_framebuffer_size(GLFWwindow *window, int width, int height)
 
 void ra_prepare_buffers(struct RandomAttractors *ra)
 {
+    ra_log(ra, "Preparing buffers and compiling shaders...\n");
     glGenBuffers(1, &ra->lines_vbo_handle);
     glGenBuffers(1, &ra->spot_vbo_handle);
     glGenVertexArrays(1, &ra->lines_vao_handle);
@@ -276,14 +300,14 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     GLuint spot_vs_handle  = 0;
     GLuint spot_fs_handle  = 0;
     GLuint lines_cs_handle = 0;
-    ra_compile_shader(vertex_mesh_glsl, SHADERTYPE_VERTEX, &mesh_vs_handle);
-    ra_compile_shader(vertex_spot_glsl, SHADERTYPE_VERTEX, &spot_vs_handle);
-    ra_compile_shader(fragment_mesh_glsl, SHADERTYPE_FRAGMENT, &mesh_fs_handle);
-    ra_compile_shader(fragment_spot_glsl, SHADERTYPE_FRAGMENT, &spot_fs_handle);
-    ra_compile_shader(compute_lines_glsl, SHADERTYPE_COMPUTE, &lines_cs_handle);
-    ra_link_shader_program(mesh_vs_handle, mesh_fs_handle, &ra->mesh_program_handle);
-    ra_link_shader_program(spot_vs_handle, spot_fs_handle, &ra->spot_program_handle);
-    ra_link_shader_program(lines_cs_handle, -1, &ra->lines_program_handle);
+    ra_compile_shader(ra, vertex_mesh_glsl, SHADERTYPE_VERTEX, &mesh_vs_handle);
+    ra_compile_shader(ra, vertex_spot_glsl, SHADERTYPE_VERTEX, &spot_vs_handle);
+    ra_compile_shader(ra, fragment_mesh_glsl, SHADERTYPE_FRAGMENT, &mesh_fs_handle);
+    ra_compile_shader(ra, fragment_spot_glsl, SHADERTYPE_FRAGMENT, &spot_fs_handle);
+    ra_compile_shader(ra, compute_lines_glsl, SHADERTYPE_COMPUTE, &lines_cs_handle);
+    ra_link_shader_program(ra, mesh_vs_handle, mesh_fs_handle, &ra->mesh_program_handle);
+    ra_link_shader_program(ra, spot_vs_handle, spot_fs_handle, &ra->spot_program_handle);
+    ra_link_shader_program(ra, lines_cs_handle, -1, &ra->lines_program_handle);
 
     glDeleteShader(mesh_vs_handle);
     glDeleteShader(mesh_fs_handle);
@@ -327,10 +351,12 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
+    ra_log(ra, "Buffers prepared.\n");
 }
 
 void ra_prepare_textures(struct RandomAttractors *ra)
 {
+    ra_log(ra, "Preparing spotlight texture...\n");
     int width = -1, height = -1, type = -1;
 
     unsigned char *spotlight_data = stbi_load_from_memory(spotlight_png_data, spotlight_png_data_size, &width, &height, &type, 0);
@@ -349,12 +375,14 @@ void ra_prepare_textures(struct RandomAttractors *ra)
     }
     else
     {
-        printf("Failed to generate spotlight texture!\n");
+        ra_log(ra, "Failed to generate spotlight texture!\n");
     }
     stbi_image_free(spotlight_data);
+
+    ra_log(ra, "Spotlight texture prepared.\n");
 }
 
-enum RA_Error ra_compile_shader(const GLchar *source, enum RA_ShaderType type, GLuint *handle)
+enum RA_Error ra_compile_shader(struct RandomAttractors *ra, const GLchar *source, enum RA_ShaderType type, GLuint *handle)
 {
     int gl_shader_type = 0;
 
@@ -370,14 +398,17 @@ enum RA_Error ra_compile_shader(const GLchar *source, enum RA_ShaderType type, G
             gl_shader_type = GL_COMPUTE_SHADER;
             break;
         default:
-            printf("Failed to compile illegal ShaderType: %d\n", type);
+            ra_log(ra, "Failed to compile illegal ShaderType: %d\n", type);
             return RA_ERROR_INIT_SHADERTYPE;
     }
 
-    printf("\n ================================================== \n");
-    printf("   Compiling shader");
-    printf("\n ================================================== \n");
-    printf("\n\n%s\n\n", source);
+    if (ra->is_preview)
+    {
+        printf("\n ================================================== \n");
+        printf("   Compiling shader");
+        printf("\n ================================================== \n");
+        printf("\n\n%s\n\n", source);
+    }
 
     *handle = glCreateShader(gl_shader_type);
     glShaderSource(*handle, 1, &source, NULL);
@@ -389,15 +420,15 @@ enum RA_Error ra_compile_shader(const GLchar *source, enum RA_ShaderType type, G
     if (!success)
     {
         glGetShaderInfoLog(*handle, 512, NULL, infoLog);
-        printf("Shader compilation failed. Type=%d. Error: %s\n", gl_shader_type, infoLog);
+        ra_log(ra, "Shader compilation failed. Type=%d. Error: %s\n", gl_shader_type, infoLog);
         return RA_ERROR_INIT_SHADERCOMP;
     }
 
-    printf("Successfully compiled shader (%d)! Type=%d\n", *handle, gl_shader_type);
+    ra_log(ra, "Successfully compiled shader (%d)! Type=%d\n", *handle, gl_shader_type);
     return RA_OK;
 }
 
-enum RA_Error ra_link_shader_program(GLuint shader1, GLuint shader2, GLuint *program_handle)
+enum RA_Error ra_link_shader_program(struct RandomAttractors *ra, GLuint shader1, GLuint shader2, GLuint *program_handle)
 {
     *program_handle = glCreateProgram();
 
@@ -417,11 +448,11 @@ enum RA_Error ra_link_shader_program(GLuint shader1, GLuint shader2, GLuint *pro
     if (!success)
     {
         glGetProgramInfoLog(*program_handle, 512, NULL, infoLog);
-        printf("Shader linking failed. Error: %s\n", infoLog);
+        ra_log(ra, "Shader linking failed. Error: %s\n", infoLog);
         return RA_ERROR_INIT_SHADERLINK;
     }
 
-    printf("Successfully linked shader program (%d)\n", *program_handle);
+    ra_log(ra, "Successfully linked shader program (%d)\n", *program_handle);
     return RA_OK;
 }
 
@@ -473,7 +504,7 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
 
     if (ra->is_preview)
     {
-        printf("time_secs=%f; uniform=%d\n", uptime_secs, time_secs_location);
+        ra_log(ra, "time_secs=%f; uniform=%d\n", uptime_secs, time_secs_location);
     }
 
     glBindVertexArray(ra->lines_vao_handle);

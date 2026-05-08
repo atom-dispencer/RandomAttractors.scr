@@ -38,6 +38,7 @@ struct RandomAttractors
     GLuint lines_program_handle;
 
     GLuint spotlight_tex_handle;
+    struct timespec start_ts;
 };
 
 struct LineDataPoint
@@ -48,12 +49,13 @@ struct LineDataPoint
 
 void          ra_parse_args(struct RandomAttractors *mdbrt, int argc, char *argv[]);
 void          ra_print_help();
+void          ra_log(struct RandomAttractors *ra, const char *format, ...);
 void          ra_create_glfw_window(struct RandomAttractors *ra);
 void          _callback_ra_framebuffer_size(GLFWwindow *window, int width, int height);
 void          ra_prepare_buffers(struct RandomAttractors *ra);
 void          ra_prepare_textures(struct RandomAttractors *ra);
-enum RA_Error ra_compile_shader(const GLchar *source, enum RA_ShaderType type, GLuint *handle);
+enum RA_Error ra_compile_shader(struct RandomAttractors *ra, const GLchar *source, enum RA_ShaderType type, GLuint *handle);
 enum RA_Error ra_link_shader_program(
-    GLuint vertex_handle, GLuint frag_handle, GLuint *program_handle);
+    struct RandomAttractors *ra, GLuint vertex_handle, GLuint frag_handle, GLuint *program_handle);
 void ra_compute_next_step(struct RandomAttractors *ra);
 void ra_render(struct RandomAttractors *ra, long long uptime_nanos);
