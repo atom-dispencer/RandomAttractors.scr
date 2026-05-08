@@ -27,9 +27,12 @@
 
 // clang-format on
 
+#define RA_PATH_COUNT (2)
+#define RA_POINTS_PER_PATH (10)
+
 // Spotlight sits just below the XZ plane (y=0.05) to prevent z-fighting
 // All mesh geometry will be transformed to sit above the XZ plane
-float spotlight_vertices[] = {
+const static float spotlight_vertices[] = {
     // 0
     /* XYZW */ -1.0f, -0.05f, -1.0f, 1.0f, /* Tex XY */ 0.0f, 0.0f,
 
@@ -109,7 +112,6 @@ int main(int argc, char *argv[])
     start_epoch_nanos = (long long)(ts.tv_sec * 1e9 + ts.tv_nsec);
 
     long long uptime_nanos          = 0;
-    long long last_step_epoch_nanos = start_epoch_nanos;
     long long current_epoch_nanos   = start_epoch_nanos;
 
     while (!glfwWindowShouldClose(ra.window))
@@ -117,11 +119,6 @@ int main(int argc, char *argv[])
         timespec_get(&ts, TIME_UTC);
         current_epoch_nanos = (long long)(ts.tv_sec * 1e9 + ts.tv_nsec);
         uptime_nanos        = current_epoch_nanos - start_epoch_nanos;
-        if (current_epoch_nanos - last_step_epoch_nanos > 1e9)
-        {
-            ra_compute_next_step(&ra);
-            last_step_epoch_nanos = current_epoch_nanos;
-        }
 
         if (GLFW_PRESS == glfwGetKey(ra.window, GLFW_KEY_SPACE)
             || GLFW_PRESS == glfwGetKey(ra.window, GLFW_KEY_ENTER)
@@ -343,7 +340,7 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     // int bezpts_per_       = 10;
 
     int point_count  = 9;
-    int line_count   = 12;
+    int line_count   = (point_count - 1) * 2;  // Each pair of consecutive points makes one line
     int point_size   = sizeof(GLfloat) * 4;
     int line_size    = sizeof(struct LineDataPoint);
     int points_size  = point_count * point_size;
@@ -474,6 +471,50 @@ void ra_compute_next_step(struct RandomAttractors *ra)
     // TODO Run compute shader
 }
 
+void ra_compute_new_mesh(struct RandomAttractors *ra, double uptime_secs)
+{
+    //
+    // Generate new points
+    //
+
+    glUseProgram(ra->points_program_handle);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->points_ssbo_handle);
+    GLuint y_offset_location = glGetUniformLocation(ra->points_program_handle, "y_offset");
+    GLuint point_count_location = glGetUniformLocation(ra->points_program_handle, "point_count");
+    float  y_offset          = floor(uptime_secs) * 0.1f;
+    if (y_offset_location != -1)
+    {
+        glUniform1f(y_offset_location, y_offset);
+    }
+    if (point_count_location != -1)
+    {
+        glUniform1i(point_count_location, 9);
+    }
+    glDispatchCompute(1, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    //
+    // Convert the points into lines
+    //
+
+    glUseProgram(ra->lines_program_handle);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->points_ssbo_handle);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ra->lines_vbo_handle);
+    glBindVertexArray(ra->lines_vao_handle);
+    GLuint line_point_count_location = glGetUniformLocation(ra->lines_program_handle, "point_count");
+    GLuint line_count_location = glGetUniformLocation(ra->lines_program_handle, "line_count");
+    if (line_point_count_location != -1)
+    {
+        glUniform1i(line_point_count_location, 9);
+    }
+    if (line_count_location != -1)
+    {
+        glUniform1i(line_count_location, 16);
+    }
+    glDispatchCompute(1, 1, 1);
+    glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
 void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
 {
     double uptime_secs = uptime_nanos / 1.0e9;
@@ -492,23 +533,12 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     //
     // Compute new geometry
     //
-    glUseProgram(ra->points_program_handle);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->points_ssbo_handle);
-    GLuint y_offset_location = glGetUniformLocation(ra->points_program_handle, "y_offset");
-    float  y_offset          = floor(uptime_secs) * 0.1f;
-    if (y_offset_location != -1)
+    static double next_update_secs = -1000;
+    if (uptime_secs > next_update_secs)
     {
-        glUniform1f(y_offset_location, y_offset);
+        next_update_secs = uptime_secs + 5;
+        ra_compute_new_mesh(ra, uptime_secs);
     }
-    glDispatchCompute(1, 1, 1);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    glUseProgram(ra->lines_program_handle);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->points_ssbo_handle);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ra->lines_vbo_handle);
-    glBindVertexArray(ra->lines_vao_handle);
-    glDispatchCompute(1, 1, 1);
-    glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 
     //
     // Spotlight

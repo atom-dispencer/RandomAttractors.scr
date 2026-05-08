@@ -18,23 +18,24 @@ layout(std430, binding = 1) buffer LineData
     LineDataPoint line_data[];
 };
 
+uniform int point_count;
+uniform int line_count;
+
 void main()
 {
-    // Build an example line strip from the point buffer using GL_LINES.
-    line_data[0].pos = points[0];
-    line_data[1].pos = points[1];
-    line_data[2].pos = points[1];
-    line_data[3].pos = points[2];
-    line_data[4].pos = points[2];
-    line_data[5].pos = points[3];
-    line_data[6].pos = points[3];
-    line_data[7].pos = points[4];
-    line_data[8].pos = points[4];
-    line_data[9].pos = points[5];
-    line_data[10].pos = points[5];
-    line_data[11].pos = points[6];
+    // Build line strip from the point buffer using GL_LINES
+    // Each line connects consecutive points
+    int line_idx = 0;
+    for (int i = 0; i < point_count - 1 && line_idx < line_count - 1; ++i)
+    {
+        line_data[line_idx].pos = points[i];
+        line_idx++;
+        line_data[line_idx].pos = points[i + 1];
+        line_idx++;
+    }
 
-    for (int i = 0; i < 12; ++i)
+    // Fill remaining line data with zeros
+    for (int i = line_idx; i < line_count; ++i)
     {
         line_data[i].data = vec4(0.0);
     }
