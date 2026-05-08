@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 #include "random_attractors.h"
 
@@ -293,28 +294,33 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
 {
     ra_log(ra, "Preparing buffers and compiling shaders...\n");
     glGenBuffers(1, &ra->lines_vbo_handle);
+    glGenBuffers(1, &ra->points_ssbo_handle);
     glGenBuffers(1, &ra->spot_vbo_handle);
     glGenVertexArrays(1, &ra->lines_vao_handle);
     glGenVertexArrays(1, &ra->spot_vao_handle);
 
-    GLuint mesh_vs_handle  = 0;
-    GLuint mesh_fs_handle  = 0;
-    GLuint spot_vs_handle  = 0;
-    GLuint spot_fs_handle  = 0;
-    GLuint lines_cs_handle = 0;
+    GLuint mesh_vs_handle        = 0;
+    GLuint mesh_fs_handle        = 0;
+    GLuint spot_vs_handle        = 0;
+    GLuint spot_fs_handle        = 0;
+    GLuint points_cs_handle      = 0;
+    GLuint lines_cs_handle       = 0;
     ra_compile_shader(ra, vertex_mesh_glsl, SHADERTYPE_VERTEX, &mesh_vs_handle);
     ra_compile_shader(ra, vertex_spot_glsl, SHADERTYPE_VERTEX, &spot_vs_handle);
     ra_compile_shader(ra, fragment_mesh_glsl, SHADERTYPE_FRAGMENT, &mesh_fs_handle);
     ra_compile_shader(ra, fragment_spot_glsl, SHADERTYPE_FRAGMENT, &spot_fs_handle);
+    ra_compile_shader(ra, compute_points_glsl, SHADERTYPE_COMPUTE, &points_cs_handle);
     ra_compile_shader(ra, compute_lines_glsl, SHADERTYPE_COMPUTE, &lines_cs_handle);
     ra_link_shader_program(ra, mesh_vs_handle, mesh_fs_handle, &ra->mesh_program_handle);
     ra_link_shader_program(ra, spot_vs_handle, spot_fs_handle, &ra->spot_program_handle);
+    ra_link_shader_program(ra, points_cs_handle, -1, &ra->points_program_handle);
     ra_link_shader_program(ra, lines_cs_handle, -1, &ra->lines_program_handle);
 
     glDeleteShader(mesh_vs_handle);
     glDeleteShader(mesh_fs_handle);
     glDeleteShader(spot_vs_handle);
     glDeleteShader(spot_fs_handle);
+    glDeleteShader(points_cs_handle);
     glDeleteShader(lines_cs_handle);
 
     // Load vertex data
@@ -336,20 +342,25 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     // int vertex_per_series = 2 * points_per_series - 2;
     // int bezpts_per_       = 10;
 
-    int vertex_count = 12;
-    int point_size   = sizeof(struct LineDataPoint);
-    int buffer_size  = vertex_count * point_size;
+    int point_count  = 9;
+    int line_count   = 12;
+    int point_size   = sizeof(GLfloat) * 4;
+    int line_size    = sizeof(struct LineDataPoint);
+    int points_size  = point_count * point_size;
+    int lines_size   = line_count * line_size;
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ra->points_ssbo_handle);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, points_size, NULL, GL_DYNAMIC_DRAW);
 
     glBindVertexArray(ra->lines_vao_handle);
     glBindBuffer(GL_ARRAY_BUFFER, ra->lines_vbo_handle);
-    glBufferData(GL_ARRAY_BUFFER, buffer_size, (void *)0, GL_DYNAMIC_DRAW);
-    // glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->lines_vbo_handle);
+    glBufferData(GL_ARRAY_BUFFER, lines_size, NULL, GL_DYNAMIC_DRAW);
 
     // 0 = position (x, y, z, w)
     // 1 = fraction through curve (0-1)
     // Colour is computed in the vertex/fragment shaders from (1)
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, point_size, (void *)0);
-    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, point_size, (void *)(4 * sizeof(float)));
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, line_size, (void *)0);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, line_size, (void *)(4 * sizeof(float)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
@@ -481,11 +492,23 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     //
     // Compute new geometry
     //
-    glUseProgram(ra->lines_program_handle);
-    glBindVertexArray(ra->lines_vao_handle);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->lines_vbo_handle);
+    glUseProgram(ra->points_program_handle);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->points_ssbo_handle);
+    GLuint y_offset_location = glGetUniformLocation(ra->points_program_handle, "y_offset");
+    float  y_offset          = floor(uptime_secs) * 0.1f;
+    if (y_offset_location != -1)
+    {
+        glUniform1f(y_offset_location, y_offset);
+    }
     glDispatchCompute(1, 1, 1);
-    glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    glUseProgram(ra->lines_program_handle);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->points_ssbo_handle);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ra->lines_vbo_handle);
+    glBindVertexArray(ra->lines_vao_handle);
+    glDispatchCompute(1, 1, 1);
+    glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 
     //
     // Spotlight

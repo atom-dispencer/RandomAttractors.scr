@@ -29,12 +29,14 @@ struct RandomAttractors
 
     GLuint lines_vbo_handle;
     GLuint lines_vao_handle;
+    GLuint points_ssbo_handle;
     GLuint spot_vbo_handle;
     GLuint spot_vao_handle;
     // Normal shaders
     GLuint mesh_program_handle;
     GLuint spot_program_handle;
     // Compute shaders
+    GLuint points_program_handle;
     GLuint lines_program_handle;
 
     GLuint spotlight_tex_handle;
