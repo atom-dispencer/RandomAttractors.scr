@@ -224,13 +224,15 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
 
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
+    // In preview mode, make it 16:9 small windowed
     if (ra->is_preview)
     {
         ra_log(ra, "Creating preview window\n");
         width  = 800;
-        height = 600;
+        height = 450;
         window = glfwCreateWindow(width, height, "RandomAttractors.scr", NULL, NULL);
     }
+    // In screensaver mode, make it full screen
     else
     {
         GLFWmonitor       *monitor = glfwGetPrimaryMonitor();
