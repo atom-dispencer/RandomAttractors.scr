@@ -556,11 +556,11 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     // Spotlight
     //
 
-    glUseProgram(ra->spot_program_handle);
-    glBindTexture(GL_TEXTURE_2D, ra->spot_tex_handle);
-    glBindVertexArray(ra->spot_vao_handle);
-    glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 6));
-    glBindVertexArray(0);
+    // glUseProgram(ra->spot_program_handle);
+    // glBindTexture(GL_TEXTURE_2D, ra->spot_tex_handle);
+    // glBindVertexArray(ra->spot_vao_handle);
+    // glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 6));
+    // glBindVertexArray(0);
 
     //
     // Mesh
