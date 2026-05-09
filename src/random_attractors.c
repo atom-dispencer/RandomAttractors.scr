@@ -290,11 +290,20 @@ void _callback_ra_framebuffer_size(GLFWwindow *window, int width, int height)
 void ra_prepare_buffers(struct RandomAttractors *ra)
 {
     ra_log(ra, "Preparing buffers and compiling shaders...\n");
+
+    //
+    // Generate OpenGL objects
+    //
+
     glGenBuffers(1, &ra->lines_vbo_handle);
     glGenBuffers(1, &ra->points_ssbo_handle);
     glGenBuffers(1, &ra->spot_vbo_handle);
     glGenVertexArrays(1, &ra->lines_vao_handle);
     glGenVertexArrays(1, &ra->spot_vao_handle);
+
+    //
+    // Compile and link all shaders
+    //
 
     GLuint mesh_vs_handle        = 0;
     GLuint mesh_fs_handle        = 0;
@@ -320,47 +329,59 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     glDeleteShader(points_cs_handle);
     glDeleteShader(lines_cs_handle);
 
-    // Load vertex data
+    //
+    // Load spotlight vertex data
+    //
+    // Attributes:
+    // 0 : Vertex coordinates (X,Y,Z,W)
+    // 1 : Texture coordinates (X,Y)
+    //
 
     glBindVertexArray(ra->spot_vao_handle);
     glBindBuffer(GL_ARRAY_BUFFER, ra->spot_vbo_handle);
     glBufferData(GL_ARRAY_BUFFER, sizeof(spotlight_vertices), spotlight_vertices, GL_STATIC_DRAW);
-
-    // 0 = position (x, y, z, w)
-    // 1 = texture coordinate (x, y)
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(4 * sizeof(float)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
-    // int series            = 100;
-    // int points_per_series = 100;
-    // int vertex_per_series = 2 * points_per_series - 2;
-    // int bezpts_per_       = 10;
+    //
+    // Allocate attractor point vertex data
+    //
+
+    int lines_per_path = RA_POINTS_PER_PATH - 1;
+    int vertices_per_path = lines_per_path * 2;
 
     int point_count  = 9;
     int line_count   = (point_count - 1) * 2;  // Each pair of consecutive points makes one line
     int point_size   = sizeof(GLfloat) * 4;
     int line_size    = sizeof(struct LineDataPoint);
+
     int points_size  = point_count * point_size;
     int lines_size   = line_count * line_size;
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ra->points_ssbo_handle);
     glBufferData(GL_SHADER_STORAGE_BUFFER, points_size, NULL, GL_DYNAMIC_DRAW);
 
+    //
+    // Load lines vertex data (only allocated size, not set)
+    //
+    // Attributes:
+    // 0 : Vertex coordinates (X,Y,Z,W)
+    // 1 : Fractional position of vertex within path (0-1)
+    //
+
     glBindVertexArray(ra->lines_vao_handle);
     glBindBuffer(GL_ARRAY_BUFFER, ra->lines_vbo_handle);
     glBufferData(GL_ARRAY_BUFFER, lines_size, NULL, GL_DYNAMIC_DRAW);
-
-    // 0 = position (x, y, z, w)
-    // 1 = fraction through curve (0-1)
-    // Colour is computed in the vertex/fragment shaders from (1)
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, line_size, (void *)0);
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, line_size, (void *)(4 * sizeof(float)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
+
+    // All done :)
     ra_log(ra, "Buffers prepared.\n");
 }
 
@@ -372,8 +393,8 @@ void ra_prepare_textures(struct RandomAttractors *ra)
     unsigned char *spotlight_data = stbi_load_from_memory(spotlight_png_data, spotlight_png_data_size, &width, &height, &type, 0);
     if (spotlight_data)
     {
-        glGenTextures(1, &ra->spotlight_tex_handle);
-        glBindTexture(GL_TEXTURE_2D, ra->spotlight_tex_handle);
+        glGenTextures(1, &ra->spot_tex_handle);
+        glBindTexture(GL_TEXTURE_2D, ra->spot_tex_handle);
         // wrap/filter
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -545,7 +566,7 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     //
 
     glUseProgram(ra->spot_program_handle);
-    glBindTexture(GL_TEXTURE_2D, ra->spotlight_tex_handle);
+    glBindTexture(GL_TEXTURE_2D, ra->spot_tex_handle);
     glBindVertexArray(ra->spot_vao_handle);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 6));
 

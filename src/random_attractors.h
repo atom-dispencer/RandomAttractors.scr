@@ -24,23 +24,26 @@ enum RA_ShaderType
 struct RandomAttractors
 {
     enum RA_Error error;
+    struct timespec start_ts;
     bool          is_preview;
     GLFWwindow   *window;
 
-    GLuint lines_vbo_handle;
-    GLuint lines_vao_handle;
-    GLuint points_ssbo_handle;
+    // Spotlight
     GLuint spot_vbo_handle;
     GLuint spot_vao_handle;
+    GLuint spot_tex_handle;
+    // Attractor points & Bezier points in compute shaders
+    GLuint attpts_ssbo_handle;
+    GLuint bexpts_ssbo_handle;
+    // Lines for rendering
+    GLuint lines_vbo_handle;
+    GLuint lines_vao_handle;
     // Normal shaders
     GLuint mesh_program_handle;
     GLuint spot_program_handle;
     // Compute shaders
     GLuint points_program_handle;
     GLuint lines_program_handle;
-
-    GLuint spotlight_tex_handle;
-    struct timespec start_ts;
 };
 
 struct LineDataPoint
