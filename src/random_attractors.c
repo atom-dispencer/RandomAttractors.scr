@@ -324,8 +324,8 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     ra_compile_shader(ra, mesh_tcs_glsl, SHADERTYPE_TCS, &mesh_tcs_handle);
     ra_compile_shader(ra, mesh_tes_glsl, SHADERTYPE_TES, &mesh_tes_handle);
     ra_compile_shader(ra, mesh_vs_glsl,  SHADERTYPE_VS,  &mesh_vs_handle);
-    ra_link_shader_program(ra, mesh_vs_handle, mesh_tcs_handle, mesh_tes_handle, mesh_fs_handle, &ra->mesh_program_handle);
-    // ra_link_shader_program(ra, mesh_vs_handle, -1, -1, mesh_fs_handle, &ra->mesh_program_handle);
+    // ra_link_shader_program(ra, mesh_vs_handle, mesh_tcs_handle, mesh_tes_handle, mesh_fs_handle, &ra->mesh_program_handle);
+    ra_link_shader_program(ra, mesh_vs_handle, -1, -1, mesh_fs_handle, &ra->mesh_program_handle);
     glDeleteShader(mesh_fs_handle);
     glDeleteShader(mesh_tcs_handle);
     glDeleteShader(mesh_tes_handle);
@@ -576,6 +576,7 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->controls_ssbo_handle);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
     glLineWidth(5.0f);
+    glPointSize(5.0f);
     // glDrawArrays(GL_PATCHES, 0, RA_CONTROLS_COUNT);
     glDrawArrays(GL_POINTS, 0, RA_CONTROLS_COUNT);
     glBindVertexArray(0);

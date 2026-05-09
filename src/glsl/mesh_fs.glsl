@@ -26,5 +26,6 @@ vec3 colorFromFraction(float t)
 
 void main()
 {
-    FragColor = vec4(colorFromFraction(tes_path_fraction), 1.0);
+    // FragColor = vec4(colorFromFraction(tes_path_fraction), 1.0);
+    FragColor = vec4(1.0, 1.0, 1.0, 1.0);
 }
