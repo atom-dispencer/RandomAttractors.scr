@@ -49,7 +49,7 @@ struct RandomAttractors
 struct LineDataPoint
 {
     GLfloat pos[4];
-    GLfloat path_fraction;
+    GLfloat data[4];
 };
 
 void          ra_parse_args(struct RandomAttractors *mdbrt, int argc, char *argv[]);

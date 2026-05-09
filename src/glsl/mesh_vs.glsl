@@ -33,7 +33,15 @@
 struct ControlPoint
 {
     vec4 position;
-    float path_fraction;
+    /**
+     * std430 enforces 16-byte alignment
+     *
+     * X: path_fraction
+     * Y: Unused
+     * Z: Unused
+     * W: Unused
+     */
+    vec4 data;
 };
 layout(std430, binding = 0) buffer ControlPoints
 {
@@ -142,7 +150,7 @@ mat4 scale(vec3 s)
 void main()
 {
   ControlPoint cp = control[gl_VertexID];
-  vs_path_fraction = cp.path_fraction;
+  vs_path_fraction = cp.data.x;
 
   float pi = 3.1415926f;
   float tau = 2*pi;

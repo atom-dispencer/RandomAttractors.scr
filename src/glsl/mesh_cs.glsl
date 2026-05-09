@@ -35,7 +35,15 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 struct ControlPoint
 {
     vec4 position;
-    float path_fraction;
+    /**
+     * std430 enforces 16-byte alignment
+     *
+     * X: path_fraction
+     * Y: Unused
+     * Z: Unused
+     * W: Unused
+     */
+    vec4 data;
 };
 layout(std430, binding = 0) buffer ControlPoints
 {
@@ -148,7 +156,7 @@ void main()
             {
                 ControlPoint cp;
 
-                cp.path_fraction = float(control_start(0, bez, ctrl)) / float(CONTROLS_PER_PATH);
+                cp.data.x = float(control_start(0, bez, ctrl)) / float(CONTROLS_PER_PATH);
                 cp.position = generate_next_attractor_point();
 
                 set_control(0, bez, ctrl, cp);
@@ -184,7 +192,7 @@ void main()
                         break;
                 };
 
-                cp.path_fraction = float(control_start(0, bez, ctrl)) / float(CONTROLS_PER_PATH);
+                cp.data.x = float(control_start(0, bez, ctrl)) / float(CONTROLS_PER_PATH);
                 set_control(0, bez, ctrl, cp);
             }
         }
