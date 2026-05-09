@@ -2,12 +2,12 @@
 
 layout(vertices = 4) out;
 
-in  float vs_path_fraction;
-out float tcs_path_fraction;
+in  float vs_path_fraction[];
+out float tcs_path_fraction[];
 
 void main()
 {
-    tcs_path_fraction = vs_path_fraction;
+    tcs_path_fraction[gl_InvocationID] = vs_path_fraction[gl_InvocationID];
 
     //
     // Pass control points straight through

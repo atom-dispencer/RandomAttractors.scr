@@ -552,9 +552,9 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
 
     glUseProgram(ra->mesh_program_handle);
 
-    GLuint time_secs_location = glGetUniformLocation(ra->mesh_program_handle, "time_secs");
+    GLuint time_secs_location = glGetUniformLocation(ra->mesh_program_handle, "TIME_SECS");
     glUniform1f(time_secs_location, uptime_secs);
-    ra_log(ra, "time_secs=%f; uniform=%d\n", uptime_secs, time_secs_location);
+    // ra_log(ra, "time_secs=%f; uniform=%d\n", uptime_secs, time_secs_location);
 
     glBindVertexArray(ra->mesh_vao_handle);
     glPatchParameteri(GL_PATCH_VERTICES, 4);

@@ -2,12 +2,6 @@
 
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-struct ControlPoint
-{
-    vec4 position;
-    float path_fraction;
-};
-
 /**
  * The control points of the random attractor cubic bezier curve.
  *
@@ -38,6 +32,11 @@ struct ControlPoint
  * Each curve therefore starts at:
  *   PATH_START + (CONTROLS_PER_BEZIER * BEZIER_INDEX)
  */
+struct ControlPoint
+{
+    vec4 position;
+    float path_fraction;
+};
 layout(std430, binding = 0) buffer ControlPoints
 {
     ControlPoint control[];

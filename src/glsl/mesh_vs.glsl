@@ -1,13 +1,48 @@
 #version 460 core
 
-uniform float time_secs = 0;
-
+/**
+ * The control points of the random attractor cubic bezier curve.
+ *
+ * If the points of the random attractor curve are:
+ *   P1    P2    P3    P4
+ *   P5    P6    P7    P8
+ *   P9    P10   P11   P12
+ *
+ * Then the bezier control points are:
+ *   P1    P2    P3    P4       : ( 4 unique + 0 overlap + 0 mirror) =  4 total
+ *   P4    P4*   P5    P6       : ( 6 unique + 1 overlap + 1 mirror) =  8 total
+ *   P6    P6*   P7    P8       : ( 8 unique + 2 overlap + 2 mirror) = 12 total
+ *   P8    P8*   P9    P10      : (10 unique + 3 overlap + 3 mirror) = 16 total
+ *   P10   P10*  P11   P12      : (12 unique + 4 overlap + 4 mirror) = 20 total
+ *
+ * ... where Px* is the mirrored control point of the previous two points:
+ *   P(x)* = P(x) + (P(x) - P(x-1))
+ *
+ * Multiple paths (P, Q, R, ...) are concatenated in this buffer:
+ *   P1 P2 P3 Q1 Q2 Q3 R1 R2 R3
+ *
+ * The size of this buffer is therefore:
+ *   CONTROLS_PER_BEZIER * BEZIER_PER_PATH * PATH_COUNT
+ *
+ * Each path starts at:
+ *   PATH_INDEX * (CONTROLS_PER_BEZIER * BEZIER_PER_PATH)
+ *
+ * Each curve therefore starts at:
+ *   PATH_START + (CONTROLS_PER_BEZIER * BEZIER_INDEX)
+ */
+struct ControlPoint
+{
+    vec4 position;
+    float path_fraction;
+};
 layout(std430, binding = 0) buffer ControlPoints
 {
     ControlPoint control[];
 };
 
 out float vs_path_fraction;
+
+uniform float TIME_SECS = 0;
 
 //
 // A transformation matrix which translates (moves/slides) a vector in each
