@@ -6,8 +6,6 @@ layout(location = 2) in float _unused1;
 layout(location = 3) in float _unused2;
 layout(location = 4) in float _unused3;
 
-uniform float TIME_SECS = 0;
-
 out float vs_path_fraction;
 
 void main()
