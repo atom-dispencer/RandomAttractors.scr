@@ -1,10 +1,13 @@
 #version 460 core
 
-layout(location = 0) in vec4 aPos;
-layout(location = 1) in float frac;
 uniform float time_secs = 0;
 
-out vec4 vertex_colour;
+layout(std430, binding = 0) buffer ControlPoints
+{
+    ControlPoint control[];
+};
+
+out float vs_path_fraction;
 
 //
 // A transformation matrix which translates (moves/slides) a vector in each
@@ -98,30 +101,24 @@ mat4 scale(vec3 s)
     );
 }
 
-vec4 calculate_colour()
-{
-  return vec4(normalize(aPos.xyz * 0.5 + 0.5), 1.0);
-}
-
 //
 // Let's do some shading!
 //
 void main()
 {
-  vertex_colour = calculate_colour();
+  ControlPoint cp = control[gl_VertexID];
+  vs_path_fraction = cp.path_fraction;
 
   float pi = 3.1415926f;
   float tau = 2*pi;
 
-  float ASPECT_RATIO = 1.7777;                  // 16:9
   float PITCH_RADS = tau * 0.125;               // eighth circle
-  float ROTATION_RADS_PER_SEC = tau * -0.05;    // 
+  float ASPECT_RATIO = 1.7777;                  // 16:9
 
   float FOV_RADS = tau * 0.25;                  // quarter circle
   float Z_NEAR = 0.1;
   float Z_FAR = 100.0;
 
-  float y_rads = time_secs * ROTATION_RADS_PER_SEC;
   float ortho_scale = 1.0;
   float o_left = -ortho_scale * ASPECT_RATIO;
   float o_right = ortho_scale * ASPECT_RATIO;
@@ -130,10 +127,10 @@ void main()
 
   gl_Position = //
     // orthographic(o_left, o_right, o_top, o_bottom, -10, 10) // 4th - Apply the projection matrix
-    perspective(FOV_RADS, ASPECT_RATIO, Z_NEAR, Z_FAR)      // 4th - Apply the projection matrix
+    perspective(FOV_RADS, ASPECT_RATIO, Z_NEAR, Z_FAR)          // 4th - Apply the projection matrix
     * translate(vec3(0.0, 0.0, -2))                         // 3rd - Translate away from the camera
     * x_rotation(PITCH_RADS)                                // 2nd - Pitch the mesh like we're looking from above
-    * y_rotation(y_rads)                                    // 1st - Yaw the mesh so it spins nicely
+    // * y_rotation(y_rads)                                    // 1st - Yaw the mesh so it spins nicely
     // 
-    * aPos;
+    * cp.position;
 }

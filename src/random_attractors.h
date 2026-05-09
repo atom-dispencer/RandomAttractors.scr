@@ -16,9 +16,11 @@ enum RA_Error
 
 enum RA_ShaderType
 {
-    SHADERTYPE_VERTEX   = 1000,
-    SHADERTYPE_FRAGMENT = 2000,
-    SHADERTYPE_COMPUTE  = 3000
+    SHADERTYPE_VS  = 1000,
+    SHADERTYPE_FS  = 2000,
+    SHADERTYPE_CS  = 3000,
+    SHADERTYPE_TCS = 4000,
+    SHADERTYPE_TES = 5000
 };
 
 struct RandomAttractors
@@ -28,28 +30,26 @@ struct RandomAttractors
     bool          is_preview;
     GLFWwindow   *window;
 
+
+    // Bezier control points 
+    GLuint controls_program_handle;
+    GLuint controls_ssbo_handle;
+
+    // Mesh
+    GLuint mesh_program_handle;
+    GLuint mesh_vao_handle;
+
     // Spotlight
+    GLuint spot_program_handle;
     GLuint spot_vbo_handle;
     GLuint spot_vao_handle;
     GLuint spot_tex_handle;
-    // Attractor points & Bezier points in compute shaders
-    GLuint attpts_ssbo_handle;
-    GLuint bexpts_ssbo_handle;
-    // Lines for rendering
-    GLuint lines_vbo_handle;
-    GLuint lines_vao_handle;
-    // Normal shaders
-    GLuint mesh_program_handle;
-    GLuint spot_program_handle;
-    // Compute shaders
-    GLuint points_program_handle;
-    GLuint lines_program_handle;
 };
 
 struct LineDataPoint
 {
     GLfloat pos[4];
-    GLfloat data[4];
+    GLfloat path_fraction;
 };
 
 void          ra_parse_args(struct RandomAttractors *mdbrt, int argc, char *argv[]);
@@ -61,6 +61,6 @@ void          ra_prepare_buffers(struct RandomAttractors *ra);
 void          ra_prepare_textures(struct RandomAttractors *ra);
 enum RA_Error ra_compile_shader(struct RandomAttractors *ra, const GLchar *source, enum RA_ShaderType type, GLuint *handle);
 enum RA_Error ra_link_shader_program(
-    struct RandomAttractors *ra, GLuint vertex_handle, GLuint frag_handle, GLuint *program_handle);
+    struct RandomAttractors *ra, GLuint shader1, GLuint shader2, GLuint shader3, GLuint shader4, GLuint *program_handle);
 void ra_compute_next_step(struct RandomAttractors *ra);
 void ra_render(struct RandomAttractors *ra, long long uptime_nanos);

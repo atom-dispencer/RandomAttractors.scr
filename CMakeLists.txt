@@ -30,25 +30,23 @@ file(MAKE_DIRECTORY ${OUT_SHADERS_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${OUT_SHADERS_DIR})
 
 # Vertex
-embed_shader_glsl(${SHADERS_DIR}/vertex_mesh.glsl ${OUT_SHADERS_DIR}/vertex_mesh.h vertex_mesh_glsl)
-embed_shader_glsl(${SHADERS_DIR}/vertex_spot.glsl ${OUT_SHADERS_DIR}/vertex_spot.h vertex_spot_glsl)
-# Fragment
-embed_shader_glsl(${SHADERS_DIR}/fragment_mesh.glsl ${OUT_SHADERS_DIR}/fragment_mesh.h fragment_mesh_glsl)
-embed_shader_glsl(${SHADERS_DIR}/fragment_spot.glsl ${OUT_SHADERS_DIR}/fragment_spot.h fragment_spot_glsl)
-# Compute
-embed_shader_glsl(${SHADERS_DIR}/compute_points.glsl ${OUT_SHADERS_DIR}/compute_points.h compute_points_glsl)
-embed_shader_glsl(${SHADERS_DIR}/compute_lines.glsl ${OUT_SHADERS_DIR}/compute_lines.h compute_lines_glsl)
+embed_shader_glsl(${SHADERS_DIR}/mesh_cs.glsl ${OUT_SHADERS_DIR}/mesh_cs.h mesh_cs_glsl)
+embed_shader_glsl(${SHADERS_DIR}/mesh_fs.glsl ${OUT_SHADERS_DIR}/mesh_fs.h mesh_fs_glsl)
+embed_shader_glsl(${SHADERS_DIR}/mesh_tcs.glsl ${OUT_SHADERS_DIR}/mesh_tcs.h mesh_tcs_glsl)
+embed_shader_glsl(${SHADERS_DIR}/mesh_tes.glsl ${OUT_SHADERS_DIR}/mesh_tes.h mesh_tes_glsl)
+embed_shader_glsl(${SHADERS_DIR}/mesh_vs.glsl ${OUT_SHADERS_DIR}/mesh_vs.h mesh_vs_glsl)
+embed_shader_glsl(${SHADERS_DIR}/spot_fs.glsl ${OUT_SHADERS_DIR}/spot_fs.h spot_fs_glsl)
+embed_shader_glsl(${SHADERS_DIR}/spot_vs.glsl ${OUT_SHADERS_DIR}/spot_vs.h spot_vs_glsl)
 
 add_custom_target(embed_shaders DEPENDS
     # Vertex
-    ${CMAKE_BINARY_DIR}/shaders/vertex_mesh.h
-    ${CMAKE_BINARY_DIR}/shaders/vertex_spot.h
-    # Fragment
-    ${CMAKE_BINARY_DIR}/shaders/fragment_mesh.h
-    ${CMAKE_BINARY_DIR}/shaders/fragment_spot.h
-    # Compute
-    ${CMAKE_BINARY_DIR}/shaders/compute_points.h
-    ${CMAKE_BINARY_DIR}/shaders/compute_lines.h
+    ${CMAKE_BINARY_DIR}/shaders/mesh_cs.h
+    ${CMAKE_BINARY_DIR}/shaders/mesh_fs.h
+    ${CMAKE_BINARY_DIR}/shaders/mesh_tcs.h
+    ${CMAKE_BINARY_DIR}/shaders/mesh_tes.h
+    ${CMAKE_BINARY_DIR}/shaders/mesh_vs.h
+    ${CMAKE_BINARY_DIR}/shaders/spot_fs.h
+    ${CMAKE_BINARY_DIR}/shaders/spot_vs.h
 )
 add_dependencies(RandomAttractors embed_shaders)
 
