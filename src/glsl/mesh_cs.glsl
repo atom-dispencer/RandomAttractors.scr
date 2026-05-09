@@ -117,44 +117,27 @@ void set_control(int path_index, int bezier_index, int ctrlpt_index, ControlPoin
 
 vec4 spiralPoint(int i)
 {
-    int cycle = i / 4;        // radius step per full rotation
-    // int cycle = i / 4;        // radius step per full rotation
-    // int m     = i % 4;        // direction within cycle
-
-    float r = 0.25 * float(cycle + 1);
-
-    vec2 dir;
-
-    if (m == 0) dir = vec2( 1.0,  0.0); // +X
-    else if (m == 1) dir = vec2( 0.0,  1.0); // +Y
-    // if (m == 0) dir = vec2( 1.0,  0.0); // +X
-    // else if (m == 1) dir = vec2( 0.0,  1.0); // +Y
-    // else if (m == 2) dir = vec2(-1.0,  0.0); // -X
-    // else dir = vec2( 0.0, -1.0); // -Y
-
-    // return vec4(dir * r, 0.0, 1.0) + vec4(0,0.5,0,0);
-
-    // in each cycle, we move out by this amount
-    float magnitude = 0.25;
-    vec4 direction = vec4(0);
+    float magnitude = 0.125 * float(i) / float(4);
+    vec3 direction = vec3(0.0, 0.0, 0.0);
     
     switch(i % 4)
     {
         case 0:
-            direction = vec4(1, 0, 0, 1);
+            direction = vec3(1, 0, 0);
             break;
         case 1:
-            direction = vec4(0, 1, 0, 1);
+            direction = vec3(0, 1, 0);
             break;
         case 2:
-            direction = vec4(-1, 0, 0, 1);
+            direction = vec3(-1, 0, 0);
             break;
         case 3:
-            direction = vec4(0, -1, 0, 1);
+            direction = vec3(0, -1, 0);
             break;
     }
-    
-    return (float(i)/float(4)) * magnitude * direction;
+
+    vec3 vector = direction * magnitude;
+    return vec4(vector.x, vector.y, vector.z, 1.0);
 }
 
 int _temp_point_index = 0;

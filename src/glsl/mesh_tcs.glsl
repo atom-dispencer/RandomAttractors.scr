@@ -19,10 +19,10 @@ void main()
     //
     if (gl_InvocationID == 0)
     {
-        // Number of generated line segments
-        gl_TessLevelOuter[0] = 16.0;
+        // One isoline per patch
+        gl_TessLevelOuter[0] = 1.0;
 
-        // Number of isolines
-        gl_TessLevelOuter[1] = 1.0;
+        // Number of segments along that isoline
+        gl_TessLevelOuter[1] = 16.0;
     }
 }
