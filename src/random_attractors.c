@@ -29,7 +29,7 @@
 
 #define RA_BYTES_PER_CONTROL    (sizeof(struct ControlPoint))
 #define RA_CONTROLS_PER_BEZIER  (4)
-#define RA_BEZIER_PER_PATH      (2)
+#define RA_BEZIER_PER_PATH      (3)
 #define RA_PATH_COUNT           (1)
 //
 #define RA_CONTROLS_PER_PATH    (RA_CONTROLS_PER_BEZIER * RA_BEZIER_PER_PATH)
@@ -323,6 +323,7 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     ra_compile_shader(ra, mesh_tes_glsl, SHADERTYPE_TES, &mesh_tes_handle);
     ra_compile_shader(ra, mesh_vs_glsl,  SHADERTYPE_VS,  &mesh_vs_handle);
     ra_link_shader_program(ra, mesh_vs_handle, mesh_tcs_handle, mesh_tes_handle, mesh_fs_handle, &ra->mesh_program_handle);
+    // ra_link_shader_program(ra, mesh_vs_handle, -1, -1, mesh_fs_handle, &ra->mesh_program_handle);
     glDeleteShader(mesh_fs_handle);
     glDeleteShader(mesh_tcs_handle);
     glDeleteShader(mesh_tes_handle);
@@ -353,21 +354,27 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
+    glBindBuffer(0);
 
     //
     // Allocate attractor point vertex data
     //
-
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ra->controls_ssbo_handle);
     glBufferData(GL_SHADER_STORAGE_BUFFER, RA_CONTROL_BUFFER_SIZE, NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(0);
 
     //
-    // Create a blank VAO for the mesh data because OpenGL requires a VAO to be
-    // bound for drawing operations, but the vertex data is actually generated
-    // in the compute shader and passed via an SSBO on the GPU.
+    // The mesh VAO gives the VS access to the CS SSBO (control points) like a
+    // normal vertex buffer so RenderDoc is actually useful again.
     //
     glBindVertexArray(ra->mesh_vao_handle);
+    glBindBuffer(GL_ARRAY_BUFFER, ra->controls_ssbo_handle);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(struct ControlPoint), (void *)0);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(struct ControlPoint), (void *)(sizeof(float) * 4));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
     glBindVertexArray(0);
+    glBindBuffer(0);
 
     // All done :)
     ra_log(ra, "Buffers prepared.\n");
