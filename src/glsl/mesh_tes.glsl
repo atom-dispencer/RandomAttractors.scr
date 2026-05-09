@@ -100,16 +100,24 @@ void main()
         curve_pos = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, localT);
     }
 
+    //
+    // Tranform the point into its final position in clip space
+    //
+
     float pi = 3.1415926;
     float tau = 2.0 * pi;
     float PITCH_RADS = tau * 0.125;
+    float ASPECT_RATIO = 1.7777;
     float ROTATION_RADS_PER_SEC = tau * -0.05;
+    float FOV_RADS = tau * 0.25;
     float y_rads = TIME_SECS * ROTATION_RADS_PER_SEC;
 
-    gl_Position =
-        x_rotation(PITCH_RADS)
-        * y_rotation(y_rads)
-        * curve_pos;
+    gl_Position = 
+    //     perspective(FOV_RADS, ASPECT_RATIO, 0.1, 100.0)
+    //   * translate(vec3(0.0, 0.0, -2))
+       x_rotation(PITCH_RADS)
+      * y_rotation(y_rads)
+      * curve_pos;
 
     tes_path_fraction = mix(
         tcs_path_fraction[idx],
