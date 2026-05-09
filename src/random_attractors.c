@@ -29,12 +29,12 @@
 
 #define RA_BYTES_PER_CONTROL    (sizeof(GLfloat) * 4)
 #define RA_CONTROLS_PER_BEZIER  (4)
-#define RA_BEZIER_PER_PATH      (3)
+#define RA_BEZIER_PER_PATH      (20)
 #define RA_PATH_COUNT           (1)
 //
 #define RA_CONTROLS_PER_PATH    (RA_CONTROLS_PER_BEZIER * RA_BEZIER_PER_PATH)
-#define RA_BYTES_PER_PATH       (RA_CONTROLS_PER_PATH * RA_BYTES_PER_CONTROL)
-#define RA_CONTROL_BUFFER_SIZE  (RA_BYTES_PER_PATH * RA_PATH_COUNT)
+#define RA_CONTROLS_COUNT       (RA_CONTROLS_PER_PATH * RA_PATH_COUNT)
+#define RA_CONTROL_BUFFER_SIZE  (RA_CONTROLS_COUNT * RA_BYTES_PER_CONTROL)
 
 /**
  * Spotlight sits just below the XZ plane (y=0.05) to prevent z-fighting
@@ -559,5 +559,5 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     glBindVertexArray(ra->mesh_vao_handle);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
     glLineWidth(5.0f);
-    glDrawArrays(GL_PATCHES, 0, RA_CONTROL_BUFFER_SIZE);
+    glDrawArrays(GL_PATCHES, 0, RA_CONTROLS_COUNT);
 }

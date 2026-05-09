@@ -99,23 +99,34 @@ ControlPoint get_control(int path_index, int bezier_index, int ctrlpt_index)
     return control[control_start(path_index, bezier_index, ctrlpt_index)];
 }
 
+/**
+ * Set the control point (in the control buffer) at the given location.
+ */
+void set_control(int path_index, int bezier_index, int ctrlpt_index, ControlPoint cp)
+{
+    control[control_start(path_index, bezier_index, ctrlpt_index)] = cp;
+}
+
+vec4 spiralPoint(int i)
+{
+    float r = 0.05 * float(i + 1);
+
+    vec2 dir;
+
+    int m = i % 4;
+
+    if (m == 0) dir = vec2( 1.0,  0.0); // +X
+    else if (m == 1) dir = vec2( 0.0,  1.0); // +Y
+    else if (m == 2) dir = vec2(-1.0,  0.0); // -X
+    else dir = vec2( 0.0, -1.0); // -Y
+
+    return vec4(dir * r, 1.0, 1.0);
+}
+
 int _temp_point_index = 0;
 vec4 generate_next_attractor_point()
 {
-    vec4 _defined_vertices[9] = 
-    {
-        vec4(-1.000, +0.000, 1.0, 1.0),
-        vec4(+0.000, +0.875, 1.0, 1.0),
-        vec4(+0.750, +0.000, 1.0, 1.0),
-        vec4(-0.000, -0.625, 1.0, 1.0),
-        vec4(-0.500, +0.000, 1.0, 1.0),
-        vec4(+0.000, +0.375, 1.0, 1.0),
-        vec4(+0.250, +0.000, 1.0, 1.0),
-        vec4(-0.000, -0.125, 1.0, 1.0),
-        vec4(-0.000, +0.000, 1.0, 1.0)
-    };
-
-    return _defined_vertices[_temp_point_index++];
+    return spiralPoint(_temp_point_index++);
 }
 
 vec4 mirrored_control_position(vec4 p1, vec4 p2)
@@ -125,42 +136,57 @@ vec4 mirrored_control_position(vec4 p1, vec4 p2)
 
 void main()
 {
-    /**
-     * For our setup of cubic Beziers, where:
-     * - The first control point of the Bezier curve B(x) shares the final
-     *   point of B(x-1) to ensure position continuity
-     * - The second control point of the curve B(x) is the mirror of the
-     *   second-to-last control of B(x-1) across the final point of B(x-1),
-     *   which ensures tangential continuity
-     * 
-     * The exception to these rules is the first curve, which has 4 unique
-     * control as it has no predecessor with which to be continuous.
-     */
-    int UNIQUE_ATTRACTOR_POINTS = (2 * BEZIER_PER_PATH + 2);
-
-    for (int i = 0; i < UNIQUE_ATTRACTOR_POINTS; i++)
+    for (int bez = 0; bez < BEZIER_PER_PATH; bez++)
     {
-        vec4 p = generate_next_attractor_point();
-
-        // If we're NOT in the first Bezier AND this would be the first control
-        // point of this bezier, we need to set up continuity from the previous
-        // Bezier
-        if ((i >= CONTROLS_PER_BEZIER) && (i % CONTROLS_PER_BEZIER == 0))
+        // 
+        // If this is the first bezier, we just generate 4 new points,
+        // ignoring continuity since there is no previous bezier
+        //
+        if (bez <= 0)
         {
-            // Position continuity
-            control[i].position = control[i-1].position;
-            control[i].path_fraction = float(i) / float(CONTROLS_PER_PATH);
+            for (int ctrl = 0; ctrl < CONTROLS_PER_BEZIER; ctrl++)
+            {
+                ControlPoint cp;
 
-            // Tangency continuity
-            control[i+1].position = mirrored_control_position(control[i-2].position, control[i-1].position);
-            control[i+1].path_fraction = float(i+1) / float(CONTROLS_PER_PATH);
+                cp.path_fraction = float(control_start(0, bez, ctrl)) / float(CONTROLS_PER_PATH);
+                cp.position = generate_next_attractor_point();
 
-            // Increment i past the continuity section
-            // i will now be the 3rd (index=2) point in this Bezier
-            i += 2;
+                set_control(0, bez, ctrl, cp);
+            }
+
+            continue;
         }
+        //
+        // For all Beziers after the first, we must handle position and
+        // tangential continuity
+        //
+        else
+        {
+            for (int ctrl = 0; ctrl < CONTROLS_PER_BEZIER; ctrl++)
+            {
+                ControlPoint cp;
 
-        control[i].position = p;
-        control[i].path_fraction = float(i) / float(CONTROLS_PER_PATH);
+                // If 0, add control for position continuity
+                // If 1, add control for tangency continuity
+                // If 2/3, generate a new point
+                switch (ctrl)
+                {
+                    case 0:
+                        cp.position = get_control(0, bez-1, 3).position;
+                        break;
+                    case 1:
+                        ControlPoint mirror_from = get_control(0, bez-1, 2);
+                        ControlPoint mirror_to = get_control(0, bez-1, 3);
+                        cp.position = mirrored_control_position(mirror_from.position, mirror_to.position);
+                        break;
+                    default:
+                        cp.position = generate_next_attractor_point();
+                        break;
+                };
+
+                cp.path_fraction = float(control_start(0, bez, ctrl)) / float(CONTROLS_PER_PATH);
+                set_control(0, bez, ctrl, cp);
+            }
+        }
     }
 }
