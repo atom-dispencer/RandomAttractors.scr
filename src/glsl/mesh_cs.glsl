@@ -157,6 +157,9 @@ void main()
                 ControlPoint cp;
 
                 cp.data.x = float(control_start(0, bez, ctrl)) / float(CONTROLS_PER_PATH);
+                cp.data.y = 0.0;
+                cp.data.z = 0.0;
+                cp.data.w = 0.0;
                 cp.position = generate_next_attractor_point();
 
                 set_control(0, bez, ctrl, cp);
@@ -193,6 +196,9 @@ void main()
                 };
 
                 cp.data.x = float(control_start(0, bez, ctrl)) / float(CONTROLS_PER_PATH);
+                cp.data.y = 0.0;
+                cp.data.z = 0.0;
+                cp.data.w = 0.0;
                 set_control(0, bez, ctrl, cp);
             }
         }

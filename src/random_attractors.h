@@ -46,7 +46,7 @@ struct RandomAttractors
     GLuint spot_tex_handle;
 };
 
-struct LineDataPoint
+struct ControlPoint
 {
     GLfloat pos[4];
     GLfloat data[4];

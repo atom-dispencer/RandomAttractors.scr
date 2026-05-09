@@ -27,7 +27,7 @@
 
 // clang-format on
 
-#define RA_BYTES_PER_CONTROL    (sizeof(GLfloat) * 4)
+#define RA_BYTES_PER_CONTROL    (sizeof(struct ControlPoint))
 #define RA_CONTROLS_PER_BEZIER  (4)
 #define RA_BEZIER_PER_PATH      (20)
 #define RA_PATH_COUNT           (1)
