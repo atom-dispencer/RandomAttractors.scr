@@ -82,11 +82,9 @@ set(OUT_IMAGES_DIR ${CMAKE_BINARY_DIR}/images)
 file(MAKE_DIRECTORY ${OUT_IMAGES_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${OUT_IMAGES_DIR})
 
-embed_image(${IMAGES_DIR}/bluetit.jpg ${OUT_IMAGES_DIR}/bluetit.h bluetit_jpg_data)
 embed_image(${IMAGES_DIR}/spotlight.png ${OUT_IMAGES_DIR}/spotlight.h spotlight_png_data)
 
 add_custom_target(embed_images DEPENDS
-    ${CMAKE_BINARY_DIR}/images/bluetit.h
     ${CMAKE_BINARY_DIR}/images/spotlight.h
 )
 add_dependencies(RandomAttractors embed_images)
