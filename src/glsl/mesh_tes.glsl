@@ -113,9 +113,9 @@ void main()
     float y_rads = TIME_SECS * ROTATION_RADS_PER_SEC;
 
     gl_Position = 
-    //     perspective(FOV_RADS, ASPECT_RATIO, 0.1, 100.0)
-    //   * translate(vec3(0.0, 0.0, -2))
-       x_rotation(PITCH_RADS)
+        perspective(FOV_RADS, ASPECT_RATIO, 0.1, 100.0)
+      * translate(vec3(0.0, 0.0, -2))
+      * x_rotation(PITCH_RADS)
       * y_rotation(y_rads)
       * curve_pos;
 
