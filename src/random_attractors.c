@@ -298,8 +298,10 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     // Generate OpenGL objects
     //
 
+    // Mesh
     glGenBuffers(1, &ra->controls_ssbo_handle);
-    glGenBuffers(1, &ra->mesh_vao_handle);
+    glGenVertexArrays(1, &ra->mesh_vao_handle);
+    // Spot
     glGenBuffers(1, &ra->spot_vbo_handle);
     glGenVertexArrays(1, &ra->spot_vao_handle);
 
@@ -354,14 +356,14 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
-    glBindBuffer(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     //
     // Allocate attractor point vertex data
     //
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ra->controls_ssbo_handle);
     glBufferData(GL_SHADER_STORAGE_BUFFER, RA_CONTROL_BUFFER_SIZE, NULL, GL_DYNAMIC_DRAW);
-    glBindBuffer(0);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     //
     // The mesh VAO gives the VS access to the CS SSBO (control points) like a
@@ -369,12 +371,18 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     //
     glBindVertexArray(ra->mesh_vao_handle);
     glBindBuffer(GL_ARRAY_BUFFER, ra->controls_ssbo_handle);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(struct ControlPoint), (void *)0);
-    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(struct ControlPoint), (void *)(sizeof(float) * 4));
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(struct ControlPoint), (void *)0);                    // Z,Y,Z,W
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(struct ControlPoint), (void *)(sizeof(float) * 4));  // path_fraction
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(struct ControlPoint), (void *)(sizeof(float) * 5));  // unused1
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(struct ControlPoint), (void *)(sizeof(float) * 6));  // unused2
+    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(struct ControlPoint), (void *)(sizeof(float) * 7));  // unused3
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+    glEnableVertexAttribArray(4);
     glBindVertexArray(0);
-    glBindBuffer(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // All done :)
     ra_log(ra, "Buffers prepared.\n");
@@ -552,6 +560,7 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     glBindTexture(GL_TEXTURE_2D, ra->spot_tex_handle);
     glBindVertexArray(ra->spot_vao_handle);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 6));
+    glBindVertexArray(0);
 
     //
     // Mesh
@@ -568,4 +577,5 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     glPatchParameteri(GL_PATCH_VERTICES, 4);
     glLineWidth(5.0f);
     glDrawArrays(GL_PATCHES, 0, RA_CONTROLS_COUNT);
+    glBindVertexArray(0);
 }
