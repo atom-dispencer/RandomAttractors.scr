@@ -300,6 +300,7 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
 
     // Mesh
     glGenBuffers(1, &ra->controls_ssbo_handle);
+    glGenBuffers(1, &ra->bounding_ssbo_handle);
     glGenVertexArrays(1, &ra->mesh_vao_handle);
     // Spot
     glGenBuffers(1, &ra->spot_vbo_handle);
@@ -362,6 +363,13 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     //
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ra->controls_ssbo_handle);
     glBufferData(GL_SHADER_STORAGE_BUFFER, RA_CONTROL_BUFFER_SIZE, NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    
+    //
+    // Allocate bounding box storage buffer
+    //
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ra->bounding_ssbo_handle);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 8 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     //
@@ -507,6 +515,7 @@ void ra_compute_new_mesh(struct RandomAttractors *ra, double uptime_secs)
 {
     glUseProgram(ra->controls_program_handle);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->controls_ssbo_handle);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ra->bounding_ssbo_handle);
 
     // Uniform: PATH_COUNT
     GLuint path_count_location = glGetUniformLocation(ra->controls_program_handle, "PATH_COUNT");
@@ -555,11 +564,11 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     // Spotlight
     //
 
-    // glUseProgram(ra->spot_program_handle);
-    // glBindTexture(GL_TEXTURE_2D, ra->spot_tex_handle);
-    // glBindVertexArray(ra->spot_vao_handle);
-    // glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 6));
-    // glBindVertexArray(0);
+    glUseProgram(ra->spot_program_handle);
+    glBindTexture(GL_TEXTURE_2D, ra->spot_tex_handle);
+    glBindVertexArray(ra->spot_vao_handle);
+    glDrawArrays(GL_TRIANGLES, 0, sizeof(spotlight_vertices) / (sizeof(float) * 6));
+    glBindVertexArray(0);
 
     //
     // Mesh

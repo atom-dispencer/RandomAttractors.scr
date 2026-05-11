@@ -34,6 +34,7 @@ struct RandomAttractors
     // Bezier control points 
     GLuint controls_program_handle;
     GLuint controls_ssbo_handle;
+    GLuint bounding_ssbo_handle;
 
     // Mesh
     GLuint mesh_program_handle;

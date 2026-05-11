@@ -50,6 +50,49 @@ layout(std430, binding = 0) buffer ControlPoints
     ControlPoint control[];
 };
 
+//                                                                
+//     mmmmmm      mmmm    mm    mm  mmm   mm  mmmmm       mmmm   
+//     ##""""##   ##""##   ##    ##  ###   ##  ##"""##   m#""""#  
+//     ##    ##  ##    ##  ##    ##  ##"#  ##  ##    ##  ##m      
+//     #######   ##    ##  ##    ##  ## ## ##  ##    ##   "####m  
+//     ##    ##  ##    ##  ##    ##  ##  #m##  ##    ##       "## 
+//     ##mmmm##   ##mm##   "##mm##"  ##   ###  ##mmm##   #mmmmm#" 
+//     """""""     """"      """"    ""   """  """""      """""   
+//                                                                
+
+struct BoundingBox
+{
+    vec4 minimum;
+    vec4 maximum;
+};
+layout(std430, binding = 1) buffer MeshBoundingBox
+{
+    BoundingBox mesh_bounding_box;
+};
+
+void expand_bounds(vec4 expand)
+{
+    mesh_bounding_box.minimum.x = min(mesh_bounding_box.minimum.x, expand.x);
+    mesh_bounding_box.minimum.y = min(mesh_bounding_box.minimum.y, expand.y);
+    mesh_bounding_box.minimum.z = min(mesh_bounding_box.minimum.z, expand.z);
+    mesh_bounding_box.minimum.w = min(mesh_bounding_box.minimum.w, expand.w);
+
+    mesh_bounding_box.maximum.x = max(mesh_bounding_box.maximum.x, expand.x);
+    mesh_bounding_box.maximum.y = max(mesh_bounding_box.maximum.y, expand.y);
+    mesh_bounding_box.maximum.z = max(mesh_bounding_box.maximum.z, expand.z);
+    mesh_bounding_box.maximum.w = max(mesh_bounding_box.maximum.w, expand.w);
+}
+
+//                                                                                              
+//        mmmm     mmmm    mmm   mm    mmmm    mmmmmmmm     mm     mmm   mm  mmmmmmmm    mmmm   
+//      ##""""#   ##""##   ###   ##  m#""""#   """##"""    ####    ###   ##  """##"""  m#""""#  
+//     ##"       ##    ##  ##"#  ##  ##m          ##       ####    ##"#  ##     ##     ##m      
+//     ##        ##    ##  ## ## ##   "####m      ##      ##  ##   ## ## ##     ##      "####m  
+//     ##m       ##    ##  ##  #m##       "##     ##      ######   ##  #m##     ##          "## 
+//      ##mmmm#   ##mm##   ##   ###  #mmmmm#"     ##     m##  ##m  ##   ###     ##     #mmmmm#" 
+//        """"     """"    ""   """   """""       ""     ""    ""  ""   """     ""      """""   
+//                                                                                              
+
 /** The number of paths stored in the control buffer. */
 uniform int PATH_COUNT;
 
@@ -59,6 +102,7 @@ uniform int BEZIER_PER_PATH;
 /** The number of control points which comprise each beziers in the control buffer. */
 int CONTROLS_PER_BEZIER = 4;
 
+/** */
 int CONTROLS_PER_PATH = CONTROLS_PER_BEZIER * BEZIER_PER_PATH;
 
 /**
@@ -77,6 +121,16 @@ int CONTROLS_PER_PATH = CONTROLS_PER_BEZIER * BEZIER_PER_PATH;
  * The first and final control points of the whole path are also unique.
  */
 int UNIQUE_CONTROLS_PER_PATH = CONTROLS_PER_PATH - BEZIER_PER_PATH + 1;
+
+//                                                                
+//     mmmmmm    mm    mm  mmmmmmmm  mmmmmmmm  mmmmmmmm  mmmmmm   
+//     ##""""##  ##    ##  ##""""""  ##""""""  ##""""""  ##""""## 
+//     ##    ##  ##    ##  ##        ##        ##        ##    ## 
+//     #######   ##    ##  #######   #######   #######   #######  
+//     ##    ##  ##    ##  ##        ##        ##        ##  "##m 
+//     ##mmmm##  "##mm##"  ##        ##        ##mmmmmm  ##    ## 
+//     """""""     """"    ""        ""        """"""""  ""    """
+//                                                                
 
 /**
  * @returns The index (in the control buffer) where the given path starts.
@@ -132,6 +186,22 @@ void set_control(int path_index, int bezier_index, int ctrlpt_index, ControlPoin
     control[control_start(path_index, bezier_index, ctrlpt_index)] = cp;
 }
 
+vec4 mirrored_control_position(vec4 p1, vec4 p2)
+{
+    return p2 + (p2 - p1);
+}
+
+
+//                                                                                              
+//        mm     mmmmmmmm  mmmmmmmm  mmmmmm       mm        mmmm   mmmmmmmm    mmmm    mmmmmm   
+//       ####    """##"""  """##"""  ##""""##    ####     ##""""#  """##"""   ##""##   ##""""## 
+//       ####       ##        ##     ##    ##    ####    ##"          ##     ##    ##  ##    ## 
+//      ##  ##      ##        ##     #######    ##  ##   ##           ##     ##    ##  #######  
+//      ######      ##        ##     ##  "##m   ######   ##m          ##     ##    ##  ##  "##m 
+//     m##  ##m     ##        ##     ##    ##  m##  ##m   ##mmmm#     ##      ##mm##   ##    ## 
+//     ""    ""     ""        ""     ""    """ ""    ""     """"      ""       """"    ""    """
+//                                                                                              
+
 vec4 spiralPoint(int i)
 {
     float magnitude = 0.75 * float(i) / float(4);
@@ -163,10 +233,15 @@ vec4 generate_next_attractor_point()
     return spiralPoint(_temp_point_index++);
 }
 
-vec4 mirrored_control_position(vec4 p1, vec4 p2)
-{
-    return p2 + (p2 - p1);
-}
+//                                            
+//     mmm  mmm     mm      mmmmmm   mmm   mm 
+//     ###  ###    ####     ""##""   ###   ## 
+//     ########    ####       ##     ##"#  ## 
+//     ## ## ##   ##  ##      ##     ## ## ## 
+//     ## "" ##   ######      ##     ##  #m## 
+//     ##    ##  m##  ##m   mm##mm   ##   ### 
+//     ""    ""  ""    ""   """"""   ""   """ 
+//                                            
 
 void main()
 {
@@ -197,6 +272,7 @@ void main()
                     cp.data.w = 0.0;
 
                     set_control(path, bez, ctrl, cp);
+                    expand_bounds(cp.position);
                 }
 
                 continue;
@@ -220,7 +296,7 @@ void main()
                         // because this is shared from the previous Bezier
                         //
                         case 0:
-                            cp.position = get_control(0, bez-1, 3).position;
+                            cp.position = get_control(path, bez-1, 3).position;
                             break;
                         //
                         // If 1, add control for tangency continuity
@@ -245,6 +321,7 @@ void main()
                     cp.data.z = 0.0;
                     cp.data.w = 0.0;
                     set_control(path, bez, ctrl, cp);
+                    expand_bounds(cp.position);
                 }
             }
         }
