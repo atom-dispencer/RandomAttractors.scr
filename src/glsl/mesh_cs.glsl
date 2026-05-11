@@ -153,62 +153,65 @@ vec4 mirrored_control_position(vec4 p1, vec4 p2)
 
 void main()
 {
-    for (int bez = 0; bez < BEZIER_PER_PATH; bez++)
+    for (int path = 0; path < PATH_COUNT; path++)
     {
-        // 
-        // If this is the first bezier, we just generate 4 new points,
-        // ignoring continuity since there is no previous bezier
-        //
-        if (bez <= 0)
+        for (int bez = 0; bez < BEZIER_PER_PATH; bez++)
         {
-            for (int ctrl = 0; ctrl < CONTROLS_PER_BEZIER; ctrl++)
+            // 
+            // If this is the first bezier, we just generate 4 new points,
+            // ignoring continuity since there is no previous bezier
+            //
+            if (bez <= 0)
             {
-                ControlPoint cp;
-
-                cp.data.x = float(control_start(0, bez, ctrl)) / float(CONTROLS_PER_PATH);
-                cp.data.y = 0.0;
-                cp.data.z = 0.0;
-                cp.data.w = 0.0;
-                cp.position = generate_next_attractor_point();
-
-                set_control(0, bez, ctrl, cp);
-            }
-
-            continue;
-        }
-        //
-        // For all Beziers after the first, we must handle position and
-        // tangential continuity
-        //
-        else
-        {
-            for (int ctrl = 0; ctrl < CONTROLS_PER_BEZIER; ctrl++)
-            {
-                ControlPoint cp;
-
-                // If 0, add control for position continuity
-                // If 1, add control for tangency continuity
-                // If 2/3, generate a new point
-                switch (ctrl)
+                for (int ctrl = 0; ctrl < CONTROLS_PER_BEZIER; ctrl++)
                 {
-                    case 0:
-                        cp.position = get_control(0, bez-1, 3).position;
-                        break;
-                    case 1:
-                        ControlPoint mirror_from = get_control(0, bez-1, 2);
-                        ControlPoint mirror_to = get_control(0, bez-1, 3);
-                        cp.position = mirrored_control_position(mirror_from.position, mirror_to.position);
-                        break;
-                    default:
-                        cp.position = generate_next_attractor_point();
-                        break;
-                };
+                    ControlPoint cp;
 
-                cp.data.x = float(control_start(0, bez, ctrl)) / float(CONTROLS_PER_PATH);
-                cp.data.y = 0.0;
-                cp.data.z = 0.0;
-                cp.data.w = 0.0;
-                set_control(0, bez, ctrl, cp);
+                    cp.data.x = float(control_start(path, bez, ctrl)) / float(CONTROLS_PER_PATH);
+                    cp.data.y = 0.0;
+                    cp.data.z = 0.0;
+                    cp.data.w = 0.0;
+                    cp.position = generate_next_attractor_point();
+
+                    set_control(path, bez, ctrl, cp);
+                }
+
+                continue;
+            }
+            //
+            // For all Beziers after the first, we must handle position and
+            // tangential continuity
+            //
+            else
+            {
+                for (int ctrl = 0; ctrl < CONTROLS_PER_BEZIER; ctrl++)
+                {
+                    ControlPoint cp;
+
+                    // If 0, add control for position continuity
+                    // If 1, add control for tangency continuity
+                    // If 2/3, generate a new point
+                    switch (ctrl)
+                    {
+                        case 0:
+                            cp.position = get_control(0, bez-1, 3).position;
+                            break;
+                        case 1:
+                            ControlPoint mirror_from = get_control(path, bez-1, 2);
+                            ControlPoint mirror_to = get_control(path, bez-1, 3);
+                            cp.position = mirrored_control_position(mirror_from.position, mirror_to.position);
+                            break;
+                        default:
+                            cp.position = generate_next_attractor_point();
+                            break;
+                    };
+
+                    cp.data.x = float(control_start(path, bez, ctrl)) / float(CONTROLS_PER_PATH);
+                    cp.data.y = 0.0;
+                    cp.data.z = 0.0;
+                    cp.data.w = 0.0;
+                    set_control(path, bez, ctrl, cp);
+                }
             }
         }
     }
