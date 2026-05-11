@@ -204,7 +204,7 @@ vec4 mirrored_control_position(vec4 p1, vec4 p2)
 
 vec4 spiralPoint(int i)
 {
-    float magnitude = 0.75 * float(i) / float(4);
+    float magnitude = 0.25 * float(i) / float(4);
     vec3 direction = vec3(0.0, 0.0, 0.0);
     
     switch(i % 4)
