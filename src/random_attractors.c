@@ -574,7 +574,7 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     glBindVertexArray(ra->mesh_vao_handle);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->controls_ssbo_handle);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
-    glLineWidth(5.0f);
+    glLineWidth(2.0f);
     glDrawArrays(GL_PATCHES, 0, RA_CONTROLS_COUNT);
     glBindVertexArray(0);
 }
