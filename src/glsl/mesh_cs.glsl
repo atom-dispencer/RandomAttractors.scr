@@ -117,7 +117,7 @@ void set_control(int path_index, int bezier_index, int ctrlpt_index, ControlPoin
 
 vec4 spiralPoint(int i)
 {
-    float magnitude = 0.25 * float(i) / float(4);
+    float magnitude = 0.75 * float(i) / float(4);
     vec3 direction = vec3(0.0, 0.0, 0.0);
     
     switch(i % 4)

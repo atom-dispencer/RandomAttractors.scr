@@ -52,7 +52,7 @@ void main()
         // will be arranged to closely approximate the Bezier curve represented
         // by this patch.
         // 
-        gl_TessLevelOuter[1] = 16.0;
+        gl_TessLevelOuter[1] = 32.0;
 
         // NOTE!!!
         // BEFORE YOU START PLAYING WITH DYNAMIC TESSELLATION LEVELS, GO AND

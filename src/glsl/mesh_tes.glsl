@@ -108,28 +108,22 @@ void main()
      */
     float t = gl_TessCoord.x;
 
-    //
-    // Do some weird magic here which I don't understand and am going to replace
-    // with proper cubic Bezier evaluation tomorrow :)
-    //
+    // Bezier curve interpolation
+    vec4 bezier_position = cubic_bezier_vec4(
+        gl_in[0].gl_Position,
+        gl_in[1].gl_Position,
+        gl_in[2].gl_Position,
+        gl_in[3].gl_Position,
+        t);
 
-    float segment = min(t * 3.0, 2.999999);
-    int idx = int(segment);
-    float localT = fract(segment);
-
-    vec4 curve_pos;
-    if (idx == 0)
-    {
-        curve_pos = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, localT);
-    }
-    else if (idx == 1)
-    {
-        curve_pos = mix(gl_in[1].gl_Position, gl_in[2].gl_Position, localT);
-    }
-    else
-    {
-        curve_pos = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, localT);
-    }
+    // Path fraction interpolation
+    float bezier_fraction = cubic_bezier_float(
+        tcs_path_fraction[0],
+        tcs_path_fraction[1],
+        tcs_path_fraction[2],
+        tcs_path_fraction[3],
+        t);
+    tes_path_fraction = bezier_fraction;
 
     //
     // Tranform the vertex to its final position in clip space
@@ -148,10 +142,5 @@ void main()
       * translate(vec3(0.0, 0.0, -2))
       * x_rotation(PITCH_RADS)
       * y_rotation(y_rads)
-      * curve_pos;
-
-    tes_path_fraction = mix(
-        tcs_path_fraction[idx],
-        tcs_path_fraction[idx + 1],
-        localT);
+      * bezier_position;
 }
