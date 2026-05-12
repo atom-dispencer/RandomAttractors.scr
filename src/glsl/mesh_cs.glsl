@@ -100,9 +100,10 @@ uniform int PATH_COUNT;
 uniform int BEZIER_PER_PATH;
 
 /** The number of control points which comprise each beziers in the control buffer. */
-int CONTROLS_PER_BEZIER = 4;
+const int CONTROLS_PER_BEZIER = 4;
 
-/** */
+int TOTAL_BEZIERS = PATH_COUNT * BEZIER_PER_PATH;
+
 int CONTROLS_PER_PATH = CONTROLS_PER_BEZIER * BEZIER_PER_PATH;
 
 /**
@@ -133,57 +134,43 @@ int UNIQUE_CONTROLS_PER_PATH = CONTROLS_PER_PATH - BEZIER_PER_PATH + 1;
 //                                                                
 
 /**
- * @returns The index (in the control buffer) where the given path starts.
- */
-int path_start(int path_index)
-{
-    // Clamp interval: [0, PATH_COUNT)
-    if (path_index >= PATH_COUNT) path_index = PATH_COUNT - 1;
-    if (path_index < 0) path_index = 0;
-
-    int path_length = CONTROLS_PER_BEZIER * BEZIER_PER_PATH;
-    return path_index * path_length;
-}
-
-/**
  * @returns The index (in the control buffer) where the given bezier starts.
  */
-int bezier_start(int path_index, int bezier_index)
+int bezier_start(int bezier_index)
 {
-    // Clamp interval: [0, BEZIER_PER_PATH]
-    if (bezier_index >= BEZIER_PER_PATH) bezier_index = BEZIER_PER_PATH - 1;
+    // Clamp interval: [0, TOTAL_BEZIERS]
+    if (bezier_index >= TOTAL_BEZIERS) bezier_index = TOTAL_BEZIERS - 1;
     if (bezier_index < 0) bezier_index = 0;
 
-    int index_within_path = bezier_index * CONTROLS_PER_BEZIER;
-    return path_start(path_index) + index_within_path;
+    return bezier_index * CONTROLS_PER_BEZIER;
 }
 
 /**
  * @returns The index (in the control buffer) where the given control point starts.
  */
-int control_start(int path_index, int bezier_index, int ctrlpt_index)
+int control_start(int bezier_index, int ctrlpt_index)
 {
-    // Clamp interval: [0, BEZIER_PER_PATH]
+    // Clamp interval: [0, CONTROLS_PER_BEZIER]
     if (ctrlpt_index >= CONTROLS_PER_BEZIER) ctrlpt_index = CONTROLS_PER_BEZIER - 1;
     if (ctrlpt_index < 0) ctrlpt_index = 0;
 
-    return bezier_start(path_index, bezier_index) + ctrlpt_index;
+    return bezier_start(bezier_index) + ctrlpt_index;
 }
 
 /**
  * @returns The control point (from the control buffer) at the given location.
  */
-ControlPoint get_control(int path_index, int bezier_index, int ctrlpt_index)
+ControlPoint get_control(int bezier_index, int ctrlpt_index)
 {
-    return control[control_start(path_index, bezier_index, ctrlpt_index)];
+    return control[control_start(bezier_index, ctrlpt_index)];
 }
 
 /**
  * Set the control point (in the control buffer) at the given location.
  */
-void set_control(int path_index, int bezier_index, int ctrlpt_index, ControlPoint cp)
+void set_control(int bezier_index, int ctrlpt_index, ControlPoint cp)
 {
-    control[control_start(path_index, bezier_index, ctrlpt_index)] = cp;
+    control[control_start(bezier_index, ctrlpt_index)] = cp;
 }
 
 vec4 mirrored_control_position(vec4 p1, vec4 p2)
@@ -246,83 +233,83 @@ vec4 generate_next_attractor_point()
 void main()
 {
 
-    for (int path = 0; path < PATH_COUNT; path++)
+    //
+    //
+    //
+
+    int unique_controls = 0;
+
+    for (int bez = 0; bez < TOTAL_BEZIERS; bez++)
     {
-
-        int unique_controls_on_path = 0;
-
-        for (int bez = 0; bez < BEZIER_PER_PATH; bez++)
+        // 
+        // If this is the first bezier, we just generate 4 new points,
+        // ignoring continuity since there is no previous bezier
+        //
+        if (bez <= 0)
         {
-            // 
-            // If this is the first bezier, we just generate 4 new points,
-            // ignoring continuity since there is no previous bezier
-            //
-            if (bez <= 0)
+            for (int ctrl = 0; ctrl < CONTROLS_PER_BEZIER; ctrl++)
             {
-                for (int ctrl = 0; ctrl < CONTROLS_PER_BEZIER; ctrl++)
-                {
-                    ControlPoint cp;
+                ControlPoint cp;
 
-                    cp.position = generate_next_attractor_point();
-                    unique_controls_on_path++;
+                cp.position = generate_next_attractor_point();
+                unique_controls++;
 
-                    cp.data.x = float(unique_controls_on_path-1) / float(UNIQUE_CONTROLS_PER_PATH-1);
-                    cp.data.y = 0.0;
-                    cp.data.z = 0.0;
-                    cp.data.w = 0.0;
+                cp.data.x = float(unique_controls-1) / float(UNIQUE_CONTROLS_PER_PATH-1);
+                cp.data.y = 0.0;
+                cp.data.z = 0.0;
+                cp.data.w = 0.0;
 
-                    set_control(path, bez, ctrl, cp);
-                    expand_bounds(cp.position);
-                }
-
-                continue;
+                set_control(bez, ctrl, cp);
+                expand_bounds(cp.position);
             }
-            //
-            // For all Beziers after the first, we must handle position and
-            // tangential continuity
-            //
-            else
+
+            continue;
+        }
+        //
+        // For all Beziers after the first, we must handle position and
+        // tangential continuity
+        //
+        else
+        {
+            for (int ctrl = 0; ctrl < CONTROLS_PER_BEZIER; ctrl++)
             {
-                for (int ctrl = 0; ctrl < CONTROLS_PER_BEZIER; ctrl++)
+                ControlPoint cp;
+
+                switch (ctrl)
                 {
-                    ControlPoint cp;
+                    //
+                    // If 0, add control for position continuity
+                    //
+                    // We DON'T increment the unique_controls
+                    // because this is shared from the previous Bezier
+                    //
+                    case 0:
+                        cp.position = get_control(bez-1, 3).position;
+                        break;
+                    //
+                    // If 1, add control for tangency continuity
+                    //
+                    case 1:
+                        ControlPoint mirror_from = get_control(bez-1, 2);
+                        ControlPoint mirror_to = get_control(bez-1, 3);
+                        cp.position = mirrored_control_position(mirror_from.position, mirror_to.position);
+                        unique_controls++;
+                        break;
+                    //
+                    // If 2/3, generate a new point
+                    //
+                    default:
+                        cp.position = generate_next_attractor_point();
+                        unique_controls++;
+                        break;
+                };
 
-                    switch (ctrl)
-                    {
-                        //
-                        // If 0, add control for position continuity
-                        //
-                        // We DON'T increment the unique_controls_on_path
-                        // because this is shared from the previous Bezier
-                        //
-                        case 0:
-                            cp.position = get_control(path, bez-1, 3).position;
-                            break;
-                        //
-                        // If 1, add control for tangency continuity
-                        //
-                        case 1:
-                            ControlPoint mirror_from = get_control(path, bez-1, 2);
-                            ControlPoint mirror_to = get_control(path, bez-1, 3);
-                            cp.position = mirrored_control_position(mirror_from.position, mirror_to.position);
-                            unique_controls_on_path++;
-                            break;
-                        //
-                        // If 2/3, generate a new point
-                        //
-                        default:
-                            cp.position = generate_next_attractor_point();
-                            unique_controls_on_path++;
-                            break;
-                    };
-
-                    cp.data.x = float(unique_controls_on_path-1) / float(UNIQUE_CONTROLS_PER_PATH-1);
-                    cp.data.y = 0.0;
-                    cp.data.z = 0.0;
-                    cp.data.w = 0.0;
-                    set_control(path, bez, ctrl, cp);
-                    expand_bounds(cp.position);
-                }
+                cp.data.x = float(unique_controls-1) / float(UNIQUE_CONTROLS_PER_PATH-1);
+                cp.data.y = 0.0;
+                cp.data.z = 0.0;
+                cp.data.w = 0.0;
+                set_control(bez, ctrl, cp);
+                expand_bounds(cp.position);
             }
         }
     }
