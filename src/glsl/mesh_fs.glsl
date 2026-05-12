@@ -74,6 +74,9 @@ float A(float dx)
 /**
  * Normalised wavefront position in Value-Function space.
  * The wavefront progresses linearly from (t=0,X=0) to (t=T,X=1)
+ *
+ * Specifying an `overrun` changes the mapping:
+ * From [t=0,X=0] ... To [t=T+overrun, X=1+overrun/T]
  */
 float X(float t, float T, float overrun)
 {
