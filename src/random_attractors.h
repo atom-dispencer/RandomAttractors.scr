@@ -26,7 +26,6 @@ enum RA_ShaderType
 struct RandomAttractors
 {
     enum RA_Error error;
-    struct timespec start_ts;
     bool          is_preview;
     GLFWwindow   *window;
 
@@ -65,4 +64,4 @@ enum RA_Error ra_compile_shader(struct RandomAttractors *ra, const GLchar *sourc
 enum RA_Error ra_link_shader_program(
     struct RandomAttractors *ra, GLuint shader1, GLuint shader2, GLuint shader3, GLuint shader4, GLuint *program_handle);
 void ra_compute_next_step(struct RandomAttractors *ra);
-void ra_render(struct RandomAttractors *ra, long long uptime_nanos);
+void ra_render(struct RandomAttractors *ra, double uptime_secs);

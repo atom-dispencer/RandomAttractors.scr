@@ -61,7 +61,6 @@ const static float spotlight_vertices[] = {
 int main(int argc, char *argv[])
 {
     struct RandomAttractors ra = { 0 };
-    timespec_get(&ra.start_ts, TIME_UTC);
 
     //
     // Parse program (screensaver) arguments
@@ -104,23 +103,12 @@ int main(int argc, char *argv[])
     // Simulation
     //
 
-    struct timespec ts;
-
-    timespec_get(&ts, TIME_UTC);
-
-    long long start_epoch_nanos = 0;
-    timespec_get(&ts, TIME_UTC);
-    start_epoch_nanos = (long long)(ts.tv_sec * 1e9 + ts.tv_nsec);
-
-    long long uptime_nanos          = 0;
-    long long skip_nanos            = 0;
-    long long current_epoch_nanos   = start_epoch_nanos;
+    double start_time_secs = glfwGetTime();
+    double skip_secs = 0.0;
 
     while (!glfwWindowShouldClose(ra.window))
     {
-        timespec_get(&ts, TIME_UTC);
-        current_epoch_nanos = (long long)(ts.tv_sec * 1e9 + ts.tv_nsec);
-        uptime_nanos        = current_epoch_nanos - start_epoch_nanos + skip_nanos;
+        double uptime_secs = (glfwGetTime() - start_time_secs) + skip_secs;
 
         //
         // Left Mouse & Enter keys close the window
@@ -142,9 +130,9 @@ int main(int argc, char *argv[])
                 ra_log(&ra, "Skipping cycle...\n");
                 space_debounce = true;
 
-                long long cycle_nanos = (uptime_nanos) % ( (long long) RA_CYCLE_TIME_SECS * (long long) 1e9);
-                long long residual = (RA_CYCLE_TIME_SECS * 1e9) - cycle_nanos;
-                skip_nanos += residual;
+                double cycle_secs = fmod(uptime_secs, (double)RA_CYCLE_TIME_SECS);
+                double residual = (double)RA_CYCLE_TIME_SECS - cycle_secs;
+                skip_secs += residual;
             }
         }
         else
@@ -152,7 +140,7 @@ int main(int argc, char *argv[])
             space_debounce = false;
         }
 
-        ra_render(&ra, uptime_nanos);
+        ra_render(&ra, uptime_secs);
 
         glfwSwapBuffers(ra.window);
         glfwPollEvents();
@@ -215,10 +203,7 @@ void ra_log(struct RandomAttractors *ra, const char *format, ...)
 {
     if (!ra->is_preview) return;
 
-    struct timespec now;
-    timespec_get(&now, TIME_UTC);
-    long long diff_nanos = (now.tv_sec - ra->start_ts.tv_sec) * 1000000000LL + (now.tv_nsec - ra->start_ts.tv_nsec);
-    double seconds = diff_nanos / 1e9;
+    double seconds = glfwGetTime();
     printf("[%7.3f] ", seconds);
     va_list args;
     va_start(args, format);
@@ -589,16 +574,8 @@ void ra_compute_new_mesh(struct RandomAttractors *ra, double uptime_secs)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 }
 
-void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
+void ra_render(struct RandomAttractors *ra, double uptime_secs)
 {
-    double uptime_secs = uptime_nanos / 1.0e9;
-
-    // TODO Call shaders to re-render the screen
-    // Shaders will need to:
-    // - Translate and rotate the camera to achieve an isometric viewpoint
-    // - Rotate the geometry to the current rotation angle
-    // - Find hotspots of color (bloom?) and color the regions by intensity
-
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -607,10 +584,22 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     //
     // Compute new geometry
     //
-    static double next_update_secs = -1000;
-    if (uptime_secs > next_update_secs)
+    static double next_update_secs = 0.0;
+    if (uptime_secs >= next_update_secs)
     {
-        next_update_secs = uptime_secs + RA_CYCLE_TIME_SECS;
+        //
+        // All other rendering logic is aligned strictly to uptime_secs, so
+        // this should be too! Using a delta here would be a BAD idea because
+        // you would be guaranteed to drift 1 frame every cycle, which gets
+        // problematic after a few hours of screensaving!!
+        //
+        // We therefore set the uptime to be at the start of the next cycle
+        //
+        // It's also a little tricky because we need to make sure we don't
+        // dispatch the compute shader twice (not breaking, just inefficient),
+        // so using ceil(...)*CYCLE_SECS is out of the question.
+        //
+        next_update_secs = (floor(uptime_secs / RA_CYCLE_TIME_SECS) + 1.0) * RA_CYCLE_TIME_SECS;
         ra_log(ra, "Computing new mesh...\n");
         ra_compute_new_mesh(ra, uptime_secs);
         ra_log(ra, "Mesh computed!\n");
