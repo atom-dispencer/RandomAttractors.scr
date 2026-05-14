@@ -37,7 +37,7 @@
 #define RA_CONTROL_BUFFER_SIZE  (RA_CONTROLS_COUNT * RA_BYTES_PER_CONTROL)
 //
 #define RA_CYCLE_TIME_SECS      (30)
-#define RA_CYCLE_FADE_FRACTION  (0.05)
+#define RA_CYCLE_FADE_FRACTION  (0.01)
 
 /**
  * Spotlight sits just below the XZ plane (y=0.05) to prevent z-fighting
@@ -589,6 +589,7 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     // Mesh
     //
 
+    glDepthMask(GL_FALSE);
     glUseProgram(ra->mesh_program_handle);
 
     // Uniform: TIME_SECS
@@ -618,4 +619,5 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     glLineWidth(2.0f);
     glDrawArrays(GL_PATCHES, 0, RA_CONTROLS_COUNT);
     glBindVertexArray(0);
+    glDepthMask(GL_TRUE);
 }
