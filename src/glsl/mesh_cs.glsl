@@ -358,6 +358,13 @@ void seed_attractor_factory()
 {
     float f = next_float();
 
+    // Reset the PREVIOUS buffer in case it's corrupted
+    // Should be reset by the seed function anyway
+    for (int i = 0; i < PREVIOUS.length(); i++)
+    {
+        PREVIOUS[i] = vec4(0);
+    }
+
     if (f < 1.0)
     {
         seed_3d_quadratic_polynomial_map();
@@ -440,6 +447,10 @@ bool seeded_attractor_is_suitable()
         vec4 xe = attractor_factory_next(false);
         for (int i = 0; i < PREVIOUS.length(); i++) PREVIOUS[i] -= D0;
         vec4 x = attractor_factory_next(true);
+
+        // Check for irrationalities
+        if (any(isnan(x)) || any(isinf(x))) return false;
+        if (any(isnan(xe)) || any(isinf(xe))) return false;
 
         // Calculate the Lyapunov exponent from this step
         float dd = distance(xe, PREVIOUS[0]);

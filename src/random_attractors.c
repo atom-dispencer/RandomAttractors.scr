@@ -566,7 +566,7 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     static double next_update_secs = -1000;
     if (uptime_secs > next_update_secs)
     {
-        next_update_secs = uptime_secs + 0.5;
+        next_update_secs = uptime_secs + 1;
         ra_log(ra, "Computing new mesh...\n");
         ra_compute_new_mesh(ra, uptime_secs);
         ra_log(ra, "Mesh computed!\n");
