@@ -33,14 +33,6 @@ vec3 hsv2rgb(float h, float s, float v)
  */
 float V(float dx)
 {
-    // if (dx >= -0.001) return 0;
-
-    // float k = 1.5;
-    // float A = 2.3;
-    // float w = -16*dx;
-
-    // float G = pow(w,k) * exp(-w);
-
     return 1.0;
 }
 
@@ -50,7 +42,6 @@ float V(float dx)
  */
 float H(float dx)
 {
-    // return mod(tes_path_fraction + TIME_SECS/5, 1.0);
     return 1.0;
 }
 
@@ -60,15 +51,17 @@ float H(float dx)
  */
 float S(float dx)
 {
-    if (dx >= -0.001) return 0;
+    return 1.0;
 
-    float k = 1.5;
-    float A = 2.3;
-    float w = -32*dx;
+    // if (dx >= -0.001) return 0;
 
-    float G = pow(w,k) * exp(-w);
+    // float k = 1.5;
+    // float A = 2.3;
+    // float w = -32*dx;
 
-    return 1.0 - A*G;
+    // float G = pow(w,k) * exp(-w);
+
+    // return 1.0 - A*G;
 }
 
 /**
@@ -77,15 +70,17 @@ float S(float dx)
  */
 float A(float dx)
 {
-    if (dx >= -0.001) return 0;
+    return 1.0;
 
-    float k = 1.5;
-    float A = 2.3;
-    float w = -16*dx;
+    // if (dx >= -0.001) return 0;
 
-    float G = pow(w,k) * exp(-w);
+    // float k = 1.5;
+    // float A = 2.3;
+    // float w = -16*dx;
 
-    return A*G;
+    // float G = pow(w,k) * exp(-w);
+
+    // return A*G;
 }
 
 /**
