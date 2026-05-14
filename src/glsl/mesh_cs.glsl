@@ -504,6 +504,8 @@ vec4 generate_next_attractor_point()
 
 void main()
 {
+    mesh_bounding_box.minimum = vec4(1e10);
+    mesh_bounding_box.maximum = vec4(-1e10);
 
     //
     //
