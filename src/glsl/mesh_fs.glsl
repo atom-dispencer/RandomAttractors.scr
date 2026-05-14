@@ -99,6 +99,10 @@ float A(float dx)
     }
     else
     {
+        //
+        // Desaturate/Whiten the leading edge of the wave
+        //
+
         if (dx >= -0.001) return 0;
 
         float k = 1.5;
@@ -124,8 +128,15 @@ float A(float dx)
         float fade = fadeIn * fadeOut;
 
         //
+        // A squircle-shaped wave to remove visually sharp path ends
+        //
 
-        return fade * A*G;
+        float end_ness = mod(tes_path_fraction, 1.0);
+        float end = tanh(10 * sin( end_ness * 3.1415926 ));
+
+        //
+
+        return end * fade * A*G;
     }
 }
 
