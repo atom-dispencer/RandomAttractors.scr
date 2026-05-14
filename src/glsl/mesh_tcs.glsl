@@ -60,13 +60,19 @@ void main()
         //
 
         /**
-         * 0.5 looks like a sea urchin, 0.1 looks a little crunchy, 0.05 you
-         * can see the corners if you squint but it's not noticeable as:
+         * Determines how much to tessellate a curve. The max allowed ratio of
+         * the chord of a given Bezier curve (start -> end), to the distance
+         * between the chord's and the interpolated curve's midpoint.
+         * 
+         * 0.50 - sea urchin mode
+         * 0.10 - 2005-era game terrain low-poly
+         * 0.05 - ok for small meshes but long curves suffer
+         * 0.01 - good as far as I can see on a 1920x1080 display
          *
          * (a) the mesh is moving
          * (b) the pixels are a little blocky anyway
          */
-        const float max_distance_aspect_ratio = 0.05;
+        const float max_distance_aspect_ratio = 0.01;
 
         bool untessellated = true;
         int tess_level = 0;
