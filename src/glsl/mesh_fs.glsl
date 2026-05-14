@@ -1,6 +1,8 @@
 #version 460 core
 
 uniform float TIME_SECS = 0;
+uniform float CYCLE_TIME_SECS = 0;
+uniform float CYCLE_FADE_FRACTION = 0.1;
 in float tes_path_fraction;
 out vec4 FragColor;
 

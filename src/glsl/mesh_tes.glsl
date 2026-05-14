@@ -2,6 +2,8 @@
 
 layout(isolines, equal_spacing, cw) in;
 
+uniform float CYCLE_TIME_SECS = 0;
+
 //
 // Transformation matrices
 //
@@ -133,7 +135,7 @@ void main()
     float tau = 2.0 * pi;
     float PITCH_RADS = tau * 0.125;
     float ASPECT_RATIO = 1.7777;
-    float ROTATION_RADS_PER_SEC = tau * -0.05;
+    float ROTATION_RADS_PER_SEC = tau * - ( 2 / CYCLE_TIME_SECS ); // Rotate twice per cycle
     float FOV_RADS = tau * 0.25;
     float y_rads = TIME_SECS * ROTATION_RADS_PER_SEC;
 

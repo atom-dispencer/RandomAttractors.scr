@@ -35,6 +35,9 @@
 #define RA_CONTROLS_PER_PATH    (RA_CONTROLS_PER_BEZIER * RA_BEZIER_PER_PATH)
 #define RA_CONTROLS_COUNT       (RA_CONTROLS_PER_PATH * RA_PATH_COUNT)
 #define RA_CONTROL_BUFFER_SIZE  (RA_CONTROLS_COUNT * RA_BYTES_PER_CONTROL)
+//
+#define RA_CYCLE_TIME_SECS      (30)
+#define RA_CYCLE_FADE_FRACTION  (0.1)
 
 /**
  * Spotlight sits just below the XZ plane (y=0.05) to prevent z-fighting
@@ -566,7 +569,7 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     static double next_update_secs = -1000;
     if (uptime_secs > next_update_secs)
     {
-        next_update_secs = uptime_secs + 1;
+        next_update_secs = uptime_secs + RA_CYCLE_TIME_SECS;
         ra_log(ra, "Computing new mesh...\n");
         ra_compute_new_mesh(ra, uptime_secs);
         ra_log(ra, "Mesh computed!\n");
@@ -588,9 +591,26 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
 
     glUseProgram(ra->mesh_program_handle);
 
+    // Uniform: TIME_SECS
     GLuint time_secs_location = glGetUniformLocation(ra->mesh_program_handle, "TIME_SECS");
-    glUniform1f(time_secs_location, uptime_secs);
-    // ra_log(ra, "time_secs=%f; uniform=%d\n", uptime_secs, time_secs_location);
+    if (time_secs_location != -1)
+    {
+        glUniform1f(time_secs_location, uptime_secs);
+    }
+
+    // Uniform: CYCLE_TIME_SECS
+    GLuint cycle_time_secs_location = glGetUniformLocation(ra->mesh_program_handle, "CYCLE_TIME_SECS");
+    if (cycle_time_secs_location != -1)
+    {
+        glUniform1f(cycle_time_secs_location, (GLfloat) RA_CYCLE_TIME_SECS);
+    }
+
+    // Uniform: CYCLE_FADE_FRACTION
+    GLuint cycle_fade_fraction_location = glGetUniformLocation(ra->mesh_program_handle, "CYCLE_FADE_FRACTION");
+    if (cycle_fade_fraction_location != -1)
+    {
+        glUniform1f(cycle_fade_fraction_location, (GLfloat) RA_CYCLE_FADE_FRACTION);
+    }
 
     glBindVertexArray(ra->mesh_vao_handle);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->controls_ssbo_handle);
