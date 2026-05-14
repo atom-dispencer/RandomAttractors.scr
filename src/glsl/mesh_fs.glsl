@@ -6,6 +6,8 @@ uniform float CYCLE_FADE_FRACTION = 0.1;
 in float tes_path_fraction;
 out vec4 FragColor;
 
+bool DEBUG_ALWAYS_VISIBLE = false;
+
 vec3 hsv2rgb(float h, float s, float v)
 {
     h = fract(h);
@@ -35,7 +37,14 @@ vec3 hsv2rgb(float h, float s, float v)
  */
 float V(float dx)
 {
-    return 1.0;
+    if (DEBUG_ALWAYS_VISIBLE)
+    {
+        return 1.0;
+    }
+    else
+    {
+        return 1.0;
+    }
 }
 
 /**
@@ -44,7 +53,14 @@ float V(float dx)
  */
 float H(float dx)
 {
-    return 1.0;
+    if (DEBUG_ALWAYS_VISIBLE)
+    {
+        return 1.0;
+    }
+    else
+    {
+        return 1.0;
+    }
 }
 
 /**
@@ -53,17 +69,22 @@ float H(float dx)
  */
 float S(float dx)
 {
-    return 1.0;
+    if (DEBUG_ALWAYS_VISIBLE)
+    {
+        return 1.0;
+    }
+    else
+    {
+        if (dx >= -0.001) return 0;
 
-    // if (dx >= -0.001) return 0;
+        float k = 1.5;
+        float A = 2.3;
+        float w = -32*dx;
 
-    // float k = 1.5;
-    // float A = 2.3;
-    // float w = -32*dx;
+        float G = pow(w,k) * exp(-w);
 
-    // float G = pow(w,k) * exp(-w);
-
-    // return 1.0 - A*G;
+        return 1.0 - A*G;
+    }
 }
 
 /**
@@ -72,17 +93,37 @@ float S(float dx)
  */
 float A(float dx)
 {
-    return 1.0;
+    if (DEBUG_ALWAYS_VISIBLE)
+    {
+        return 1.0;
+    }
+    else
+    {
+        if (dx >= -0.001) return 0;
 
-    // if (dx >= -0.001) return 0;
+        float k = 1.5;
+        float A = 2.3;
+        float w = -16*dx;
 
-    // float k = 1.5;
-    // float A = 2.3;
-    // float w = -16*dx;
+        float G = pow(w,k) * exp(-w);
 
-    // float G = pow(w,k) * exp(-w);
+        //
+        // Fade In/Out Ramp
+        //
 
-    // return A*G;
+        float t = mod(TIME_SECS, CYCLE_TIME_SECS);
+        float fadeDur = max(CYCLE_TIME_SECS * CYCLE_FADE_FRACTION, 1e-6);
+
+        float fadeIn  = clamp(t / fadeDur, 0.0, 1.0);
+        float fadeOut = clamp((CYCLE_TIME_SECS - t) / fadeDur, 0.0, 1.0);
+
+        float fade = min(fadeIn, fadeOut);
+        fade = clamp(fade, 0.0, 1.0);
+
+        //
+
+        return fade * A*G;
+    }
 }
 
 /**
@@ -100,7 +141,8 @@ float X(float t, float T, float overrun)
 void main()
 {
     float x0 = mod(tes_path_fraction, 1);
-    float dx = x0 - X(TIME_SECS, 5, 5);
+    float fadeout = CYCLE_TIME_SECS*CYCLE_FADE_FRACTION;
+    float dx = x0 - X(TIME_SECS, CYCLE_TIME_SECS - fadeout, fadeout);
 
     float h = H(dx);
     float s = S(dx);

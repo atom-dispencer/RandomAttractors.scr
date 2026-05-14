@@ -30,14 +30,14 @@
 #define RA_BYTES_PER_CONTROL    (sizeof(struct ControlPoint))
 #define RA_CONTROLS_PER_BEZIER  (4)
 #define RA_BEZIER_PER_PATH      (20)
-#define RA_PATH_COUNT           (2)
+#define RA_PATH_COUNT           (10)
 //
 #define RA_CONTROLS_PER_PATH    (RA_CONTROLS_PER_BEZIER * RA_BEZIER_PER_PATH)
 #define RA_CONTROLS_COUNT       (RA_CONTROLS_PER_PATH * RA_PATH_COUNT)
 #define RA_CONTROL_BUFFER_SIZE  (RA_CONTROLS_COUNT * RA_BYTES_PER_CONTROL)
 //
 #define RA_CYCLE_TIME_SECS      (30)
-#define RA_CYCLE_FADE_FRACTION  (0.1)
+#define RA_CYCLE_FADE_FRACTION  (0.05)
 
 /**
  * Spotlight sits just below the XZ plane (y=0.05) to prevent z-fighting
