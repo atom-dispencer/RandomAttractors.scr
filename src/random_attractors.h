@@ -35,6 +35,7 @@ struct RandomAttractors
     GLuint controls_program_handle;
     GLuint controls_ssbo_handle;
     GLuint bounding_ssbo_handle;
+    GLuint srand_ssbo_handle;
 
     // Mesh
     GLuint mesh_program_handle;

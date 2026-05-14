@@ -178,19 +178,22 @@ vec4 mirrored_control_position(vec4 p1, vec4 p2)
     return p2 + (p2 - p1);
 }
 
-
 //                                                                                              
-//        mm     mmmmmmmm  mmmmmmmm  mmmmmm       mm        mmmm   mmmmmmmm    mmmm    mmmmmm   
-//       ####    """##"""  """##"""  ##""""##    ####     ##""""#  """##"""   ##""##   ##""""## 
-//       ####       ##        ##     ##    ##    ####    ##"          ##     ##    ##  ##    ## 
-//      ##  ##      ##        ##     #######    ##  ##   ##           ##     ##    ##  #######  
-//      ######      ##        ##     ##  "##m   ######   ##m          ##     ##    ##  ##  "##m 
-//     m##  ##m     ##        ##     ##    ##  m##  ##m   ##mmmm#     ##      ##mm##   ##    ## 
-//     ""    ""     ""        ""     ""    """ ""    ""     """"      ""       """"    ""    """
+//     mmmmmmmm     mm        mmmm   mmmmmmmm    mmmm    mmmmmm     mmmmmm   mmmmmmmm    mmmm   
+//     ##""""""    ####     ##""""#  """##"""   ##""##   ##""""##   ""##""   ##""""""  m#""""#  
+//     ##          ####    ##"          ##     ##    ##  ##    ##     ##     ##        ##m      
+//     #######    ##  ##   ##           ##     ##    ##  #######      ##     #######    "####m  
+//     ##         ######   ##m          ##     ##    ##  ##  "##m     ##     ##             "## 
+//     ##        m##  ##m   ##mmmm#     ##      ##mm##   ##    ##   mm##mm   ##mmmmmm  #mmmmm#" 
+//     ""        ""    ""     """"      ""       """"    ""    """  """"""   """"""""   """""   
+//                                                                                              
 //                                                                                              
 
-vec4 spiralPoint(int i)
+int spiral_idx = 0;
+vec4 factory_spiral()
 {
+    int i = spiral_idx++;
+
     float magnitude = 0.25 * float(i) / float(4);
     vec3 direction = vec3(0.0, 0.0, 0.0);
     
@@ -214,10 +217,59 @@ vec4 spiralPoint(int i)
     return vec4(vector.x, vector.y, vector.z, 1.0);
 }
 
-int _temp_point_index = 0;
+//                                                                                              
+//        mm     mmmmmmmm  mmmmmmmm  mmmmmm       mm        mmmm   mmmmmmmm    mmmm    mmmmmm   
+//       ####    """##"""  """##"""  ##""""##    ####     ##""""#  """##"""   ##""##   ##""""## 
+//       ####       ##        ##     ##    ##    ####    ##"          ##     ##    ##  ##    ## 
+//      ##  ##      ##        ##     #######    ##  ##   ##           ##     ##    ##  #######  
+//      ######      ##        ##     ##  "##m   ######   ##m          ##     ##    ##  ##  "##m 
+//     m##  ##m     ##        ##     ##    ##  m##  ##m   ##mmmm#     ##      ##mm##   ##    ## 
+//     ""    ""     ""        ""     ""    """ ""    ""     """"      ""       """"    ""    """
+//                                                                                              
+
+bool ATTRACTOR_SEEDED = false;
+int ATTRACTOR_FACTORY = 0;
+layout(std430, binding = 2) buffer SeedRandom
+{
+    uint srand;
+};
+
+float next_float()
+{
+    srand = srand * 747796405u + 2891336453u;
+    srand = ((srand >> ((srand >> 28u) + 4u)) ^ srand) * 277803737u;
+    return float((srand >> 22u) ^ srand) / 4294967295.0;
+}
+
+void pick_attractor_factory()
+{
+    float f = next_float();
+
+    if (f < 1.0) ATTRACTOR_FACTORY = 1;
+    else ATTRACTOR_FACTORY = 1;
+}
+
+void seed_chaotic_attractor()
+{
+
+}
+
 vec4 generate_next_attractor_point()
 {
-    return spiralPoint(_temp_point_index++);
+    if (!ATTRACTOR_SEEDED)
+    {
+        pick_attractor_factory();
+        seed_chaotic_attractor();
+        ATTRACTOR_SEEDED = true;
+    }
+
+    switch(ATTRACTOR_FACTORY)
+    {
+        case 1:
+            return factory_spiral();
+        default:
+            return vec4(0);
+    }
 }
 
 //                                            
