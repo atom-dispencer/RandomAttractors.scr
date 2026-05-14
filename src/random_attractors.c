@@ -245,6 +245,8 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
     int         height = 0;
 
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+    glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
 
     // In preview mode, make it 16:9 small windowed
     if (ra->is_preview)
@@ -275,6 +277,7 @@ void ra_create_glfw_window(struct RandomAttractors *ra)
         return;
     }
     glfwMakeContextCurrent(window);
+    glfwFocusWindow(window);
 
     //
     // Load GLAD bindings for 'gl' functions
