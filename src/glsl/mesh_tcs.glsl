@@ -10,6 +10,17 @@ in  float vs_path_fraction[];
 /** Direct copy of vs_path_fraction */
 out float tcs_path_fraction[];
 
+vec4 cubic_bezier_vec4(vec4 V0, vec4 V1, vec4 V2, vec4 V3, float t)
+{
+    float u = 1.0 - t;
+
+    return
+        V0 * 1.0 * u*u*u +
+        V1 * 3.0 * u*u*t +
+        V2 * 3.0 * u*t*t +
+        V3 * 1.0 * t*t*t ;
+}
+
 void main()
 {
 
@@ -45,6 +56,70 @@ void main()
         gl_TessLevelOuter[0] = 1.0;
 
         //
+        // Calculate TessLevelOuter[1]
+        //
+
+        /**
+         * 0.5 looks like a sea urchin, 0.1 looks a little crunchy, 0.05 you
+         * can see the corners if you squint but it's not noticeable as:
+         *
+         * (a) the mesh is moving
+         * (b) the pixels are a little blocky anyway
+         */
+        const float max_distance_aspect_ratio = 0.05;
+
+        bool untessellated = true;
+        int tess_level = 0;
+
+        do
+        {
+            untessellated = false;
+            tess_level++;
+
+            for (int node = 0; node < tess_level; node++)
+            {
+                float t_chord_start = float(node) / float(tess_level);
+                vec4 chord_start  = cubic_bezier_vec4(
+                    gl_in[0].gl_Position,
+                    gl_in[1].gl_Position,
+                    gl_in[2].gl_Position,
+                    gl_in[3].gl_Position,
+                    t_chord_start
+                );
+
+                float t_chord_end = float(node+1) / float(tess_level);
+                vec4 chord_end = cubic_bezier_vec4(
+                    gl_in[0].gl_Position,
+                    gl_in[1].gl_Position,
+                    gl_in[2].gl_Position,
+                    gl_in[3].gl_Position,
+                    t_chord_end
+                );
+
+                vec4 chord_middle = mix(chord_start, chord_end, 0.5);
+                vec4 chord = chord_end - chord_start;
+
+                float t_curve_middle = mix(t_chord_start, t_chord_end, 0.5);
+                vec4 curve_middle = cubic_bezier_vec4(
+                    gl_in[0].gl_Position,
+                    gl_in[1].gl_Position,
+                    gl_in[2].gl_Position,
+                    gl_in[3].gl_Position,
+                    t_curve_middle
+                );
+
+                vec4 diff = chord_middle - curve_middle;
+                float aspect_ratio = length(diff) / length(chord);
+                if (aspect_ratio > max_distance_aspect_ratio)
+                {
+                    untessellated = true;
+                }
+            }
+
+        // 128 is way high enough, but we want as low as possible
+        } while (untessellated && tess_level < 128);
+
+        //
         // The TPG uses OUTER[1] to determine how to subdivide each
         // isoline.
         //
@@ -52,7 +127,7 @@ void main()
         // will be arranged to closely approximate the Bezier curve represented
         // by this patch.
         // 
-        gl_TessLevelOuter[1] = 128.0;
+        gl_TessLevelOuter[1] = tess_level;
 
         // NOTE!!!
         // BEFORE YOU START PLAYING WITH DYNAMIC TESSELLATION LEVELS, GO AND
