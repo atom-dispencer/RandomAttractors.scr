@@ -475,7 +475,7 @@ vec4 generate_next_attractor_point()
         // attractor within the timeframe.
         do {
             seed_attractor_factory();
-        } while(seeded_attractor_is_suitable());
+        } while(!seeded_attractor_is_suitable());
     }
 
     return attractor_factory_next(true);
