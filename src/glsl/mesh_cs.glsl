@@ -427,7 +427,12 @@ bool seeded_attractor_is_suitable()
         )
     );
 
+    /** Lyapunov exponent to quanify chaos */
     float lyapunov = 0;
+    /** Covariance tracker for estimating Eigenvalues */
+    mat3 cov = mat3(0);
+    vec3 mean = vec3(0);
+    int n_cov = 0;
 
     // We check the next 10000 points to:
     // - Check the series doesn't explode to infinity
@@ -436,34 +441,62 @@ bool seeded_attractor_is_suitable()
     const int ITERATIONS = 10000;
     for (int i = 0; i < ITERATIONS; i++)
     {
-        // Perturb previous points 
-
+        //
         // Calculate the parallel path
         // (1) Perturb the previous points in-place
         // (2) Calculate the next point the parallel path, without shuffing the PREVIOUS buffer
         // (3) Un-perturb the previous points 
         // (4) Calculate the next point of the original path, which *will* shuffle the PREVIOUS buffer
+        //
         for (int i = 0; i < PREVIOUS.length(); i++) PREVIOUS[i] += D0;
         vec4 xe = attractor_factory_next(false);
         for (int i = 0; i < PREVIOUS.length(); i++) PREVIOUS[i] -= D0;
         vec4 x = attractor_factory_next(true);
 
+        //
         // Check for irrationalities
+        //
         if (any(isnan(x)) || any(isinf(x))) return false;
         if (any(isnan(xe)) || any(isinf(xe))) return false;
 
-        // Calculate the Lyapunov exponent from this step
+        //
+        // Accumulate data for eigenvlaue estimation
+        //
+        vec3 dMean = PREVIOUS[0].xyz - mean;
+        mean += dMean / float(n_cov + 1);
+        //
+        cov[0][0] += dMean.x * (PREVIOUS[0].x - mean.x);
+        cov[0][1] += dMean.x * (PREVIOUS[0].y - mean.y);
+        cov[0][2] += dMean.x * (PREVIOUS[0].z - mean.z);
+        //
+        cov[1][0] += dMean.y * (PREVIOUS[0].x - mean.x);
+        cov[1][1] += dMean.y * (PREVIOUS[0].y - mean.y);
+        cov[1][2] += dMean.y * (PREVIOUS[0].z - mean.z);
+        //
+        cov[2][0] += dMean.z * (PREVIOUS[0].x - mean.x);
+        cov[2][1] += dMean.z * (PREVIOUS[0].y - mean.y);
+        cov[2][2] += dMean.z * (PREVIOUS[0].z - mean.z);
+        //
+        n_cov++;
+
+        //
+        // Calculate the Lyapunov exponent contribution from this step
+        //
         float dd = distance(xe, PREVIOUS[0]);
         float d0 = length(D0);
         lyapunov += log( abs(dd/d0) ) / float(ITERATIONS);
 
+        //
         // If the bounds explode, also unsuitable
+        //
         if (PREVIOUS[0].x < -1e3 || +1e3 < PREVIOUS[0].x) return false;
         if (PREVIOUS[0].y < -1e3 || +1e3 < PREVIOUS[0].y) return false;
         if (PREVIOUS[0].z < -1e3 || +1e3 < PREVIOUS[0].z) return false;
         if (PREVIOUS[0].w < -1e3 || +1e3 < PREVIOUS[0].w) return false;
 
+        //
         // If this tends to a point, also unsuitable
+        //
         float dx = PREVIOUS[0].x - PREVIOUS[1].x;
         float dy = PREVIOUS[0].y - PREVIOUS[1].y;
         float dz = PREVIOUS[0].z - PREVIOUS[1].z;
@@ -471,10 +504,35 @@ bool seeded_attractor_is_suitable()
         if (abs(dx) < 1e-6 && abs(dy) < 1e-6 && abs(dz) < 1e-6 && abs(dw) < 1e-6) return false;
     }
 
+    //
+    // (1) Normalise the covarariance
+    // (2) Use power iteration to prepare dominant Eigenvectors
+    // (3) Find 1st dominant Eigenvalue (lambda1)
+    // (4) Find the trace of the covariance, which is the sum of all Eigenvalues (lambda1 + lambda2 + lambda3)
+    // (5) Estimate the anisotropy of the attractor
+    // (6) Reject isotropic attractors which form boring lines
+    //
+    cov /= float(n_cov);
+    //
+    vec3 v = normalize(vec3(1.0, 0.7, 0.3));
+    for (int i = 0; i < 8; i++) v = normalize(cov * v);
+    // 
+    float lambda1 = dot(v, cov * v);
+    //
+    float trace_cov = cov[0][0] + cov[1][1] + cov[2][2];
+    //
+    float anisotropy = lambda1 / (trace_cov + 1e-6);
+    //
+    if (anisotropy > 0.75) return false;
+
+    //
     // If Lyapunov exponent is small or negative, also unsuitable
+    //
     if (lyapunov < 0.001) return false;
 
+    //
     // YAY!!
+    //
     return true;
 }
 
