@@ -262,121 +262,80 @@ vec4 factory_spiral()
     return vec4(vector.x, vector.y, vector.z, 1.0);
 }
 
-vec4 COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[8];
+vec4 COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[10];
 void seed_3d_quadratic_polynomial_map()
 {
-    float ax[10];
-    float ay[10];
-    float az[10];
-    
     for (int i = 0; i < 10; i++)
     {
-        ax[i] = next_gaussian(0.0, 0.5);
-        ay[i] = next_gaussian(0.0, 0.5);
-        az[i] = next_gaussian(0.0, 0.5);
+        COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[i] = vec4(
+            next_gaussian(0.0, 0.5),
+            next_gaussian(0.0, 0.5),
+            next_gaussian(0.0, 0.5),
+            0.0
+        );
     }
 
-    COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[0] = vec4(ax[0], ax[1], ax[2], ax[3]);
-    COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[1] = vec4(ax[4], ax[5], ax[6], ax[7]);
-    COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[2] = vec4(ax[8], ax[9], ay[0], ay[1]);
-
-    COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[3] = vec4(ay[2], ay[3], ay[4], ay[5]);
-    COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[4] = vec4(ay[6], ay[7], ay[8], ay[9]);
-
-    COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[5] = vec4(az[0], az[1], az[2], az[3]);
-    COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[6] = vec4(az[4], az[5], az[6], az[7]);
-    COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[7] = vec4(az[8], az[9], 0.0, 0.0);
-
-    PREVIOUS[0] = vec4(
-        mix(-0.5, 0.5, next_float()),
-        mix(-0.5, 0.5, next_float()),
-        mix(-0.5, 0.5, next_float()),
-        1.0
-    );
+    for (int i = 0; i < PREVIOUS.length(); i++)
+    {
+        PREVIOUS[i] = vec4(
+            mix(-0.5, 0.5, next_float()),
+            mix(-0.5, 0.5, next_float()),
+            mix(-0.5, 0.5, next_float()),
+            1.0
+        );
+    }
 }
 
 vec4 factory_3d_quadratic_polynomial_map()
 {
+    const float ax0 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[0].x;
+    const float ay0 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[0].y;
+    const float az0 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[0].z;
+
+    const float ax1 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[1].x;
+    const float ay1 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[1].y;
+    const float az1 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[1].z;
+
+    const float ax2 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[2].x;
+    const float ay2 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[2].y;
+    const float az2 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[2].z;
+
+    const float ax3 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[3].x;
+    const float ay3 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[3].y;
+    const float az3 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[3].z;
+
+    const float ax4 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[4].x;
+    const float ay4 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[4].y;
+    const float az4 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[4].z;
+
+    const float ax5 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[5].x;
+    const float ay5 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[5].y;
+    const float az5 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[5].z;
+
+    const float ax6 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[6].x;
+    const float ay6 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[6].y;
+    const float az6 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[6].z;
+
+    const float ax7 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[7].x;
+    const float ay7 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[7].y;
+    const float az7 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[7].z;
+
+    const float ax8 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[8].x;
+    const float ay8 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[8].y;
+    const float az8 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[8].z;
+
+    const float ax9 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[9].x;
+    const float ay9 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[9].y;
+    const float az9 = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[9].z;
+
     float x = PREVIOUS[0].x;
     float y = PREVIOUS[0].y;
     float z = PREVIOUS[0].z;
-
-    float ax[10];
-    float ay[10];
-    float az[10];
-
-    ax[0] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[0].x;
-    ax[1] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[0].y;
-    ax[2] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[0].z;
-    ax[3] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[0].w;
-    ax[4] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[1].x;
-    ax[5] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[1].y;
-    ax[6] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[1].z;
-    ax[7] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[1].w;
-    ax[8] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[2].x;
-    ax[9] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[2].y;
-
-    ay[0] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[2].z;
-    ay[1] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[2].w;
-    ay[2] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[3].x;
-    ay[3] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[3].y;
-    ay[4] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[3].z;
-    ay[5] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[3].w;
-    ay[6] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[4].x;
-    ay[7] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[4].y;
-    ay[8] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[4].z;
-    ay[9] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[4].w;
-
-    az[0] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[5].x;
-    az[1] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[5].y;
-    az[2] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[5].z;
-    az[3] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[5].w;
-    az[4] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[6].x;
-    az[5] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[6].y;
-    az[6] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[6].z;
-    az[7] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[6].w;
-    az[8] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[7].x;
-    az[9] = COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[7].y;
-
-    float nx =
-          ax[0]
-        + ax[1] * x
-        + ax[2] * y
-        + ax[3] * z
-        + ax[4] * x * x
-        + ax[5] * y * y
-        + ax[6] * z * z
-        + ax[7] * x * y
-        + ax[8] * x * z
-        + ax[9] * y * z;
-
-    float ny =
-          ay[0]
-        + ay[1] * x
-        + ay[2] * y
-        + ay[3] * z
-        + ay[4] * x * x
-        + ay[5] * y * y
-        + ay[6] * z * z
-        + ay[7] * x * y
-        + ay[8] * x * z
-        + ay[9] * y * z;
-
-    float nz =
-          az[0]
-        + az[1] * x
-        + az[2] * y
-        + az[3] * z
-        + az[4] * x * x
-        + az[5] * y * y
-        + az[6] * z * z
-        + az[7] * x * y
-        + az[8] * x * z
-        + az[9] * y * z;
+    float nx = (ax0) + (ax1*x + ax2*y + ax3*z) + (ax4*x*x + ax5*y*y + ax6*z*z) + (ax7*x*y + ax8*x*z + ax9*y*z);
+    float ny = (ay0) + (ay1*x + ay2*y + ay3*z) + (ay4*x*x + ay5*y*y + ay6*z*z) + (ay7*x*y + ay8*x*z + ay9*y*z);
+    float nz = (az0) + (az1*x + az2*y + az3*z) + (az4*x*x + az5*y*y + az6*z*z) + (az7*x*y + az8*x*z + az9*y*z);
 
     return vec4(nx, ny, nz, 1.0);
-
-    return vec4(0);
 }
 
 //                                                                                              
