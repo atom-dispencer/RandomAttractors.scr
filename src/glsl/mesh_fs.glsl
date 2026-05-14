@@ -114,11 +114,14 @@ float A(float dx)
         float t = mod(TIME_SECS, CYCLE_TIME_SECS);
         float fadeDur = max(CYCLE_TIME_SECS * CYCLE_FADE_FRACTION, 1e-6);
 
-        float fadeIn  = clamp(t / fadeDur, 0.0, 1.0);
-        float fadeOut = clamp((CYCLE_TIME_SECS - t) / fadeDur, 0.0, 1.0);
+        float fadeInDelay = 0.25 * fadeDur;
+        float fadeIn = smoothstep(fadeInDelay, fadeDur, t);
 
-        float fade = min(fadeIn, fadeOut);
-        fade = clamp(fade, 0.0, 1.0);
+        float fadeOutStart = CYCLE_TIME_SECS - fadeDur;
+        float fadeOutEnd   = CYCLE_TIME_SECS - 0.25 * fadeDur;
+        float fadeOut = 1.0 - smoothstep(fadeOutStart, fadeOutEnd, t);
+
+        float fade = fadeIn * fadeOut;
 
         //
 

@@ -37,7 +37,7 @@
 #define RA_CONTROL_BUFFER_SIZE  (RA_CONTROLS_COUNT * RA_BYTES_PER_CONTROL)
 //
 #define RA_CYCLE_TIME_SECS      (30)
-#define RA_CYCLE_FADE_FRACTION  (0.01)
+#define RA_CYCLE_FADE_FRACTION  (0.05)
 
 /**
  * Spotlight sits just below the XZ plane (y=0.05) to prevent z-fighting
