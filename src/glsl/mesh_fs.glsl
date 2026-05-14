@@ -3,6 +3,8 @@
 uniform float TIME_SECS = 0;
 uniform float CYCLE_TIME_SECS = 0;
 uniform float CYCLE_FADE_FRACTION = 0.1;
+uniform float FRAGMENT_HUE_RANDOM = 0;
+
 in float tes_path_fraction;
 out vec4 FragColor;
 
@@ -43,7 +45,7 @@ float V(float dx)
     }
     else
     {
-        return 1.0;
+        return 0.75;
     }
 }
 
@@ -59,7 +61,33 @@ float H(float dx)
     }
     else
     {
-        return 1.0;
+        int path = int( floor(tes_path_fraction) );
+        float shift = 0;
+
+        switch (path % 3)
+        {
+            //
+            // 1/3 of the paths should be the dominant colour
+            //
+            case 0:
+            default:
+                shift = 0;
+                break;
+            //
+            // 1/3 of the paths should be the negative analogous colour
+            //
+            case 1:
+                shift = -0.0833;
+                break;
+            //
+            // 1/3 of the paths should be the positive analogous colour
+            //
+            case 2:
+                shift = +0.0833;
+                break;
+        }
+
+        return mod(FRAGMENT_HUE_RANDOM + shift, 1.0);
     }
 }
 

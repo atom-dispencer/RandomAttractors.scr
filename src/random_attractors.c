@@ -525,6 +525,21 @@ enum RA_Error ra_link_shader_program(struct RandomAttractors *ra, GLuint shader1
 
 void ra_compute_new_mesh(struct RandomAttractors *ra, double uptime_secs)
 {
+    glUseProgram(ra->mesh_program_handle);
+    // Uniform: FRAGMENT_HUE_RANDOM
+    // THIS IS USED BY THE MESH, NOT BY THE COMPUTE PROGRAM, BUT IT MUST BE SYNCED WITH THE COMPUTE SHADER
+    GLuint fragment_hue_random_location = glGetUniformLocation(ra->mesh_program_handle, "FRAGMENT_HUE_RANDOM");
+    if (fragment_hue_random_location != -1)
+    {
+        float fhr = (float) rand() / (float) RAND_MAX;
+        ra_log(ra, "Fragment randomness is %f\n", fhr);
+        glUniform1f(fragment_hue_random_location, (GLfloat) fhr);
+    }
+
+    //
+    // Compute Shader
+    //
+
     glUseProgram(ra->controls_program_handle);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ra->controls_ssbo_handle);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ra->bounding_ssbo_handle);
