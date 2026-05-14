@@ -113,20 +113,43 @@ int main(int argc, char *argv[])
     start_epoch_nanos = (long long)(ts.tv_sec * 1e9 + ts.tv_nsec);
 
     long long uptime_nanos          = 0;
+    long long skip_nanos            = 0;
     long long current_epoch_nanos   = start_epoch_nanos;
 
     while (!glfwWindowShouldClose(ra.window))
     {
         timespec_get(&ts, TIME_UTC);
         current_epoch_nanos = (long long)(ts.tv_sec * 1e9 + ts.tv_nsec);
-        uptime_nanos        = current_epoch_nanos - start_epoch_nanos;
+        uptime_nanos        = current_epoch_nanos - start_epoch_nanos + skip_nanos;
 
-        if (GLFW_PRESS == glfwGetKey(ra.window, GLFW_KEY_SPACE)
-            || GLFW_PRESS == glfwGetKey(ra.window, GLFW_KEY_ENTER)
+        //
+        // Left Mouse & Enter keys close the window
+        //
+        if (GLFW_PRESS == glfwGetKey(ra.window, GLFW_KEY_ENTER)
             || GLFW_PRESS == glfwGetMouseButton(ra.window, GLFW_MOUSE_BUTTON_LEFT))
         {
             ra_log(&ra, "Input detected! Triggering close...\n");
             glfwSetWindowShouldClose(ra.window, GLFW_TRUE);
+        }
+        //
+        // Spacebar skips to the next cycle
+        //
+        static bool space_debounce = false;
+        if (GLFW_PRESS == glfwGetKey(ra.window, GLFW_KEY_SPACE))
+        {
+            if (!space_debounce)
+            {
+                ra_log(&ra, "Skipping cycle...\n");
+                space_debounce = true;
+
+                long long cycle_nanos = (uptime_nanos) % ( (long long) RA_CYCLE_TIME_SECS * (long long) 1e9);
+                long long residual = (RA_CYCLE_TIME_SECS * 1e9) - cycle_nanos;
+                skip_nanos += residual;
+            }
+        }
+        else
+        {
+            space_debounce = false;
         }
 
         ra_render(&ra, uptime_nanos);
