@@ -104,11 +104,6 @@ int main(int argc, char *argv[])
     struct timespec ts;
 
     timespec_get(&ts, TIME_UTC);
-    srand(ts.tv_nsec);
-    if (ra.is_preview)
-    {
-        printf("Random seed is %ld\n", ts.tv_nsec);
-    }
 
     long long start_epoch_nanos = 0;
     timespec_get(&ts, TIME_UTC);
@@ -379,7 +374,9 @@ void ra_prepare_buffers(struct RandomAttractors *ra)
     // Size vec2
     //
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ra->srand_ssbo_handle);
-    srand(time(NULL));
+    time_t t = time(NULL);
+    srand(t);
+    ra_log(ra, "Random seed is %ld\n", t);
     GLuint initial_srand = (GLuint)rand();
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint), &initial_srand, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -569,8 +566,10 @@ void ra_render(struct RandomAttractors *ra, long long uptime_nanos)
     static double next_update_secs = -1000;
     if (uptime_secs > next_update_secs)
     {
-        next_update_secs = uptime_secs + 5;
+        next_update_secs = uptime_secs + 0.5;
+        ra_log(ra, "Computing new mesh...\n");
         ra_compute_new_mesh(ra, uptime_secs);
+        ra_log(ra, "Mesh computed!\n");
     }
 
     //
