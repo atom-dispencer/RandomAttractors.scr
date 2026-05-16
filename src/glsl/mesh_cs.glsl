@@ -574,16 +574,16 @@ vec4 attractor_factory_next(bool store)
     {
         default:
         case 1:
-            factory_3d_quadratic_polynomial_map();
+            p = factory_3d_quadratic_polynomial_map();
             break;
         case 2:
-            factory_2d_quadratic_polynomial_map();
+            p = factory_2d_quadratic_polynomial_map();
             break;
         case 3:
-            factory_trig_coupled_map();
+            p = factory_trig_coupled_map();
             break;
         case 4:
-            factory_lorenz();
+            p = factory_lorenz();
             break;
     }
 
