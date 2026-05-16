@@ -234,34 +234,6 @@ const int PREVIOUS_LENGTH = 10;
  */
 vec4 PREVIOUS[PREVIOUS_LENGTH];
 
-int spiral_idx = 0;
-vec4 factory_spiral()
-{
-    int i = spiral_idx++;
-
-    float magnitude = 0.25 * float(i) / float(4);
-    vec3 direction = vec3(0.0, 0.0, 0.0);
-    
-    switch(i % 4)
-    {
-        case 0:
-            direction = vec3(1, 0, 0);
-            break;
-        case 1:
-            direction = vec3(0, 1, 0);
-            break;
-        case 2:
-            direction = vec3(-1, 0, 0);
-            break;
-        case 3:
-            direction = vec3(0, -1, 0);
-            break;
-    }
-
-    vec3 vector = direction * magnitude;
-    return vec4(vector.x, vector.y, vector.z, 1.0);
-}
-
 //
 // 3D Quadratic Polynomial Map
 // x[n+1] ​​​= A ​+ B​x + C​y + D​z + E​xx + F​yy + Gzz + H​xy + I​xz + J​yz
@@ -540,8 +512,30 @@ vec4 factory_lorenz()
 /**
  *  0: Unseeded (default)
  *  1: 3D Quadratic Polynomial Map
+ *  2: 2D Quadratic Polynomial Map
+ *  3: Trigonometric Coupled Map
+ *  4: Lorenz
+ *  5: Sprott
  */
 int ATTRACTOR_FACTORY = 0;
+
+void bind_attractor_factory()
+{
+    float f = next_float();
+
+    // x%
+    if (f <= 1.0) ATTRACTOR_FACTORY = 1;
+    // y%
+    else if (f < 1.0) ATTRACTOR_FACTORY = 1;
+    // y%
+    else if (f < 1.0) ATTRACTOR_FACTORY = 1;
+    // y%
+    else if (f < 1.0) ATTRACTOR_FACTORY = 1;
+    // y%
+    else if (f < 1.0) ATTRACTOR_FACTORY = 1;
+    // 
+    else ATTRACTOR_FACTORY = 1;
+}
 
 void seed_attractor_factory()
 {
@@ -554,15 +548,21 @@ void seed_attractor_factory()
         PREVIOUS[i] = vec4(0);
     }
 
-    if (f < 1.0)
+    switch(ATTRACTOR_FACTORY)
     {
-        seed_lorenz();
-        ATTRACTOR_FACTORY = 1;
-    }
-    else 
-    {
-        seed_lorenz();
-        ATTRACTOR_FACTORY = 1;
+        default:
+        case 1:
+            seed_3d_quadratic_polynomial_map();
+            break;
+        case 2:
+            seed_2d_quadratic_polynomial_map();
+            break;
+        case 3:
+            seed_trig_coupled_map();
+            break;
+        case 4:
+            seed_lorenz();
+            break;
     }
 }
 
@@ -572,11 +572,18 @@ vec4 attractor_factory_next(bool store)
 
     switch(ATTRACTOR_FACTORY)
     {
-        case 1:
-            p = factory_lorenz();
-            break;
         default:
-            p = vec4(0);
+        case 1:
+            factory_3d_quadratic_polynomial_map();
+            break;
+        case 2:
+            factory_2d_quadratic_polynomial_map();
+            break;
+        case 3:
+            factory_trig_coupled_map();
+            break;
+        case 4:
+            factory_lorenz();
             break;
     }
 
@@ -732,6 +739,7 @@ vec4 generate_next_attractor_point()
         // I don't think we need to limit this as we should always find an
         // attractor within the timeframe.
         do {
+            bind_attractor_factory();
             seed_attractor_factory();
         } while(!seeded_attractor_is_suitable());
     }
