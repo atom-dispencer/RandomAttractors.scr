@@ -262,6 +262,12 @@ vec4 factory_spiral()
     return vec4(vector.x, vector.y, vector.z, 1.0);
 }
 
+//
+// 3D Quadratic Polynomial Map
+// x[n+1] ​​​= A ​+ B​x + C​y + D​z + E​xx + F​yy + Gzz + H​xy + I​xz + J​yz
+// ... and cyclic permutations for Y and Z
+//
+
 vec4 COEFF_3D_QUADRATIC_POLYNOMIAL_MAP[10];
 void seed_3d_quadratic_polynomial_map()
 {
@@ -338,6 +344,189 @@ vec4 factory_3d_quadratic_polynomial_map()
     return vec4(nx, ny, nz, 1.0);
 }
 
+//
+// 2D Quadratic Polynomial Map
+// x[n+1] ​= A + B​x + C​xx + D​xy + E​y + F​y2
+// ... and cyclic permutations for Y and Z
+//
+
+vec4 COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[6];
+void seed_2d_quadratic_polynomial_map()
+{
+    for (int i = 0; i < 6; i++)
+    {
+        COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[i] = vec4(
+            next_gaussian(0.0, 0.5),
+            next_gaussian(0.0, 0.5),
+            next_gaussian(0.0, 0.5),
+            0.0
+        );
+    }
+
+    for (int i = 0; i < PREVIOUS.length(); i++)
+    {
+        PREVIOUS[i] = vec4(
+            mix(-0.5, 0.5, next_float()),
+            mix(-0.5, 0.5, next_float()),
+            mix(-0.5, 0.5, next_float()),
+            1.0
+        );
+    }
+}
+
+vec4 factory_2d_quadratic_polynomial_map()
+{
+    const float ax0 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[0].x;
+    const float ay0 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[0].y;
+    const float az0 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[0].z;
+
+    const float ax1 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[1].x;
+    const float ay1 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[1].y;
+    const float az1 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[1].z;
+
+    const float ax2 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[2].x;
+    const float ay2 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[2].y;
+    const float az2 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[2].z;
+
+    const float ax3 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[3].x;
+    const float ay3 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[3].y;
+    const float az3 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[3].z;
+
+    const float ax4 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[4].x;
+    const float ay4 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[4].y;
+    const float az4 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[4].z;
+
+    const float ax5 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[5].x;
+    const float ay5 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[5].y;
+    const float az5 = COEFF_2D_QUADRATIC_POLYNOMIAL_MAP[5].z;
+
+    float x = PREVIOUS[0].x;
+    float y = PREVIOUS[0].y;
+
+    float nx = (ax0) + (ax1*x) + (ax2*x*x) + (ax3*x*y) + (ax4*y) + (ax5*y*y);
+    float ny = (ay0) + (ay1*x) + (ay2*x*x) + (ay3*x*y) + (ay4*y) + (ay5*y*y);
+    float nz = (az0) + (az1*x) + (az2*x*x) + (az3*x*y) + (az4*y) + (az5*y*y);
+
+    return vec4(nx, ny, nz, 1.0);
+}
+
+//
+// Trigonometric Coupled Map
+// x[n+1] ​= z​*sin(Ay) + y*​cos(Bz)
+// ... and cyclic permutations for Y and Z
+//
+
+vec4 COEFF_TRIG_COUPLED_MAP[2];
+void seed_trig_coupled_map()
+{
+    for (int i = 0; i < 2; i++)
+    {
+        COEFF_TRIG_COUPLED_MAP[i] = vec4(
+            next_gaussian(0.0, 2.0),
+            next_gaussian(0.0, 2.0),
+            next_gaussian(0.0, 2.0),
+            0.0
+        );
+    }
+
+    for (int i = 0; i < PREVIOUS.length(); i++)
+    {
+        PREVIOUS[i] = vec4(
+            mix(-0.5, 0.5, next_float()),
+            mix(-0.5, 0.5, next_float()),
+            mix(-0.5, 0.5, next_float()),
+            1.0
+        );
+    }
+}
+
+vec4 factory_trig_coupled_map()
+{
+    const float ax = COEFF_TRIG_COUPLED_MAP[0].x;
+    const float ay = COEFF_TRIG_COUPLED_MAP[0].y;
+    const float az = COEFF_TRIG_COUPLED_MAP[0].z;
+
+    const float bx = COEFF_TRIG_COUPLED_MAP[1].x;
+    const float by = COEFF_TRIG_COUPLED_MAP[1].y;
+    const float bz = COEFF_TRIG_COUPLED_MAP[1].z;
+
+    float x = PREVIOUS[0].x;
+    float y = PREVIOUS[0].y;
+    float z = PREVIOUS[0].z;
+
+    float nx = z * sin(ax * y) + y * cos(bx * z);
+    float ny = x * sin(ay * z) + z * cos(by * x);
+    float nz = y * sin(az * x) + x * cos(bz * y);
+
+    return vec4(nx, ny, nz, 1.0);
+}
+
+//
+// Lorenz-Style Random Attractor
+//
+// dx/dt = A(y - x)
+// dy/dt = x(B - z) - y
+// dz/dt = xy - Cz
+//
+
+vec4 COEFF_LORENZ_ATTRACTOR[3];
+void seed_lorenz()
+{
+    float sigma = mix(8.0, 12.0, next_float());
+    float rho   = mix(24.0, 32.0, next_float());
+    float beta  = mix(2.0, 3.5, next_float());
+
+    COEFF_LORENZ_ATTRACTOR[0] = vec4(sigma, 0.0, 0.0, 0.0);
+    COEFF_LORENZ_ATTRACTOR[1] = vec4(rho,   0.0, 0.0, 0.0);
+    COEFF_LORENZ_ATTRACTOR[2] = vec4(beta,  0.0, 0.0, 0.0);
+
+    for (int i = 0; i < PREVIOUS.length(); i++)
+    {
+        PREVIOUS[i] = vec4(
+            mix(-1.0, 1.0, next_float()),
+            mix(-1.0, 1.0, next_float()),
+            mix( 0.5, 1.5, next_float()),
+            1.0
+        );
+    }
+}
+
+// Single Lorenz derivative evaluation
+vec3 lorenz_eval_derivative(vec3 p)
+{
+    const float a = COEFF_LORENZ_ATTRACTOR[0].x;
+    const float b = COEFF_LORENZ_ATTRACTOR[1].x;
+    const float c = COEFF_LORENZ_ATTRACTOR[2].x;
+
+    return vec3(
+        a * (p.y - p.x),
+        p.x * (b - p.z) - p.y,
+        p.x * p.y - c * p.z
+    );
+}
+
+vec4 factory_lorenz()
+{
+    vec3 p = PREVIOUS[0].xyz;
+
+    // Sample coursely with accurate integration
+    const float dt_eff = 0.05;
+    const int iterations = 5;
+
+    const float dt = dt_eff / iterations;
+    for (int i = 0; i < iterations; i++)
+    {
+        vec3 k1 = lorenz_eval_derivative(p);
+        vec3 k2 = lorenz_eval_derivative(p + 0.5 * dt * k1);
+        vec3 k3 = lorenz_eval_derivative(p + 0.5 * dt * k2);
+        vec3 k4 = lorenz_eval_derivative(p + dt * k3);
+
+        p += (dt / 6.0) * (k1 + 2.0*k2 + 2.0*k3 + k4);
+    }
+
+    return vec4(p, 1.0);
+}
+
 //                                                                                              
 //        mm     mmmmmmmm  mmmmmmmm  mmmmmm       mm        mmmm   mmmmmmmm    mmmm    mmmmmm   
 //       ####    """##"""  """##"""  ##""""##    ####     ##""""#  """##"""   ##""##   ##""""## 
@@ -367,12 +556,12 @@ void seed_attractor_factory()
 
     if (f < 1.0)
     {
-        seed_3d_quadratic_polynomial_map();
+        seed_lorenz();
         ATTRACTOR_FACTORY = 1;
     }
     else 
     {
-        seed_3d_quadratic_polynomial_map();
+        seed_lorenz();
         ATTRACTOR_FACTORY = 1;
     }
 }
@@ -384,7 +573,7 @@ vec4 attractor_factory_next(bool store)
     switch(ATTRACTOR_FACTORY)
     {
         case 1:
-            p = factory_3d_quadratic_polynomial_map();
+            p = factory_lorenz();
             break;
         default:
             p = vec4(0);
